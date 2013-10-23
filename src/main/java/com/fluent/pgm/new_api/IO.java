@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 
 import static com.fluent.collections.Maps.newOrderedFMap;
-import static com.fluent.pgm.new_api.CPD_Builder.CPX_from;
 import static com.fluent.pgm.new_api.MPX_Builder.MPX;
 
 public class IO
@@ -121,10 +120,11 @@ public class IO
                 String context = entry.fieldNames().next();
                 JsonNode conditional = entry.findValue(context);
                 String item = conditional.fieldNames().next();
-                map.plus(new Seqence.Ngram(Token.from(context), Token.from(item)), P.from_log(conditional.findValue
+                map.plus(Seqence.Ngram.from(Token.from(context), Token.from(item)),
+                        P.from_log(conditional.findValue
                         (item).asDouble()));
             }
-            return CPX_from(map);
+            return CPD_Builder.CPX_from(map);
         }
 
         static MPX prior_from(JsonNode root)

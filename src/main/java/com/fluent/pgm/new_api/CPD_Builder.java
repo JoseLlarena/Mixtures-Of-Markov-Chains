@@ -56,7 +56,7 @@ public class CPD_Builder
 
     public static oo<Ngram, P> _p(Token item, Token context, double p)
     {
-        return oo(new Ngram(context, item), P(p));
+        return oo(Ngram.from(context, item), P(p));
     }
 
     private CPD_Builder(final boolean withOOV)
@@ -155,7 +155,7 @@ public class CPD_Builder
 
         public P p(Token token, Context context)
         {
-            return map.get(new Ngram(context, token), ZERO);
+            return map.get(Ngram.from(context, token), ZERO);
         }
 
         public MPX mpd_from(Token context)

@@ -13,6 +13,7 @@ import static com.fluent.core.Syntax.from;
 import static com.fluent.core.Words.to;
 import static com.fluent.core.oo.*;
 import static com.fluent.math.P.*;
+import static com.fluent.pgm.new_api.CPD_Builder.CPX_from;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
 
 public interface New_Initialisation
@@ -35,7 +36,7 @@ public interface New_Initialisation
         FList<oo<String, P>> prior = newFList(from(1, to(k)),
                 index -> oo("C" + index, P(random.nextDouble() * prior_scaling)));
 
-        CPX cpd = CPD_Builder.CPX_from(conditionals);
+        CPX cpd = CPX_from(conditionals);
 
         return new MoMC(MPX.from(prior), prior.apply(oo -> oo.$1).zip(tag -> cpd));
     }

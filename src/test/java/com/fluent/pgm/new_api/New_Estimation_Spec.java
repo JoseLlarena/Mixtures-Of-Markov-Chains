@@ -12,9 +12,7 @@ import java.nio.file.Paths;
 import static com.fluent.collections.Lists.asFList;
 import static com.fluent.collections.Lists.newFList;
 import static com.fluent.pgm.new_api.Common.example_model_1;
-import static com.fluent.pgm.new_api.New_Classification.New_Classification;
 import static com.fluent.pgm.new_api.New_Estimation.New_Estimation;
-import static java.lang.System.out;
 
 public class New_Estimation_Spec extends AbstractSpec
 {
@@ -32,37 +30,37 @@ public class New_Estimation_Spec extends AbstractSpec
     {
         System.out.println(DateTimeFormat.fullDateTime().print(DateTime.now()));
 
-        FList <Seqence> data = ReadLines.INSTANCE.from(
+        FList<Seqence> data = ReadLines.INSTANCE.from(
                 Paths.get("C:\\Users\\Jose\\project-workspace\\Sequensir\\src\\main\\resources\\big_langs.txt"),
                 line -> Seqence.from(newFList(process(line), Token::from)),
-                line -> true);
+                line -> !line.isEmpty());
 
-        System.out.println(DateTime.now()+" DATA READ IN");
+        System.out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " DATA READ IN");
         MoMC model = New_Estimation.estimate(data);
+        System.out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " FINISHED TRAINING");
 
         FList<Seqence> raw_data =
                 ReadLines.INSTANCE.from(
-                        Paths.get("C:\\Users\\Jose\\project-workspace\\Sequensir\\src\\main\\resources\\big_langs.txt"),
+                        Paths.get("C:\\Users\\Jose\\project-workspace\\Sequensir\\src\\main\\resources\\big_langs" +
+                                ".txt"),
                         line -> Seqence.from(newFList(line.split("\\s+"), Token::from)),
                         line -> true);
 
-        data.apply((i, datum) -> New_Classification.classify(datum, model) + " -> " + datum).forEach(out::println);
-
+        //data.apply((i, datum) -> New_Classification.classify(datum, model) + " -> " + datum).forEach(out::println);
 
     }
 
     FList<String> process(String line)
     {
-           if(!line.isEmpty())
-               return newFList(line.replaceFirst("^\\d+\\s+", "").split("\\s+"));
+
+//        if (!line.isEmpty())
+//            return newFList(line.replaceFirst("^\\d+\\s+", "").split("\\s+"));
 
         return newFList(line.replaceAll("^\\d+\\s+", "").split("")).apply(string -> string.toLowerCase()).apply
                 (chunk ->
                         {
                             if (chunk.matches("\\d+"))
                                 return "6";
-                                //                            else if (chunk.matches("[aeiou‡Ë]"))
-                                //                                return "V";
                             else if (chunk.matches("\\s+"))
                                 return " ";
                             else if (chunk.matches("[^a-z‡Ë']"))
