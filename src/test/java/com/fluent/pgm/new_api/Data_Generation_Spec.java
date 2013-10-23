@@ -21,7 +21,7 @@ public class Data_Generation_Spec extends AbstractSpec
     @Before
     public void CONTEXT()
     {
-        model = Common.example_model();
+        model = Common.example_model_1();
     }
 
     @Test//FIXME WE WANT TO TEST SEQUENCES ARE GENERATED WITH CORRECT FREQUENCY

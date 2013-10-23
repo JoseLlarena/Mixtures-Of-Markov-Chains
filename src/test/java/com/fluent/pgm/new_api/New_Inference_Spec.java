@@ -29,7 +29,7 @@ public class New_Inference_Spec extends AbstractSpec
     @Before
     public void CONTEXT()
     {
-        model = example_model();
+        model = example_model_1();
     }
 
     @Test

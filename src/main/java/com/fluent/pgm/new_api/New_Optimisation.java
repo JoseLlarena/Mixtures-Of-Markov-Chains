@@ -10,6 +10,9 @@ public interface New_Optimisation
     {
         MoMC model = initial;
 
+        System.out.println("INITIALISED");
+        System.out.println(Token.id_to_token.stats());
+
         while (clock.isTicking())
         {
             model = em_iteration.of(model);

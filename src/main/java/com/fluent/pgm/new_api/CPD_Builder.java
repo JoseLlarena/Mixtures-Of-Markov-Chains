@@ -19,7 +19,7 @@ import static com.fluent.core.oo.*;
 import static com.fluent.core.ooo.ooo;
 import static com.fluent.math.P.*;
 import static com.fluent.pgm.Sequence.START;
-import static com.fluent.pgm.new_api.Seqence.N_gram;
+import static com.fluent.pgm.new_api.Seqence.Ngram;
 import static com.google.common.collect.Iterators.transform;
 
 public class CPD_Builder
@@ -27,11 +27,11 @@ public class CPD_Builder
     private final FTriMap<String, String, P> contextTokenProability;
     private final boolean withOOV;
 
-    public static CPX CPX_from(oo<N_gram, P>... entries)
+    public static CPX CPX_from(oo<Ngram, P>... entries)
     {
-        FMap<N_gram, P> map = newOrderedFMap();
+        FMap<Ngram, P> map = newOrderedFMap();
 
-        for (oo<N_gram, P> entry : entries)
+        for (oo<Ngram, P> entry : entries)
         {
             map.plus(entry.$1, entry.$2);
         }
@@ -39,7 +39,7 @@ public class CPD_Builder
         return new Simple_CPD(map);
     }
 
-    public static CPX CPX_from(FMap<N_gram, P> map)
+    public static CPX CPX_from(FMap<Ngram, P> map)
     {
         return new Simple_CPD(map);
     }
@@ -54,9 +54,9 @@ public class CPD_Builder
         return new CPD_Builder(true);
     }
 
-    public static oo<N_gram, P> _p(Token item, Token context, double p)
+    public static oo<Ngram, P> _p(Token item, Token context, double p)
     {
-        return oo(new N_gram(context, item), P(p));
+        return oo(new Ngram(context, item), P(p));
     }
 
     private CPD_Builder(final boolean withOOV)
@@ -124,9 +124,9 @@ public class CPD_Builder
 
     static class Simple_CPD implements CPX
     {
-        FMap<N_gram, P> map;
+        FMap<Ngram, P> map;
 
-        public Simple_CPD(FMap<N_gram, P> map)
+        public Simple_CPD(FMap<Ngram, P> map)
         {
             this.map = map;
         }
@@ -155,12 +155,12 @@ public class CPD_Builder
 
         public P p(Token token, Context context)
         {
-            return map.get(new N_gram(context, token), ZERO);
+            return map.get(new Ngram(context, token), ZERO);
         }
 
         public MPX mpd_from(Token context)
         {
-            final F2<N_gram, P, Boolean> with_context = (n_gram, p) -> n_gram.$1.equals(context);
+            final F2<Ngram, P, Boolean> with_context = (n_gram, p) -> n_gram.$1.equals(context);
 
             return new MPTX(map.select(with_context).apply((n_gram, p) -> oo(n_gram.$2.toString(), p)));
         }

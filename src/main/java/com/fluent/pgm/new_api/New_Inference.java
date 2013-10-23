@@ -34,11 +34,11 @@ public class New_Inference
         return joint_pdf.aggregate(ZERO, (marginal_sofar, tag, joint) -> marginal_sofar.add(joint));
     }
 
-    public P conditional(Seqence seq, CPX transition)
+    public P conditional(Seqence sequence, CPX transition)
     {
-        F2<P, Seqence.N_gram, P> product = (conditional, n_gram) -> conditional.x(transition.p(n_gram.$2, n_gram.$1));
+        F2<P, Seqence.Ngram, P> product = (conditional, ngram) -> conditional.x(transition.p(ngram.$2, ngram.$1));
 
-        return seq.n_grams().aggregate(ONE, product);
+        return sequence.ngrams().aggregate(ONE, product);
     }
 
     //untested

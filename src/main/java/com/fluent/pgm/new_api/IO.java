@@ -114,14 +114,14 @@ public class IO
 
         static CPX conditional_from(JsonNode entries)
         {
-            FMap<Seqence.N_gram, P> map = newOrderedFMap();
+            FMap<Seqence.Ngram, P> map = newOrderedFMap();
 
             for (JsonNode entry : entries)
             {
                 String context = entry.fieldNames().next();
                 JsonNode conditional = entry.findValue(context);
                 String item = conditional.fieldNames().next();
-                map.plus(new Seqence.N_gram(Token.from(context), Token.from(item)), P.from_log(conditional.findValue
+                map.plus(new Seqence.Ngram(Token.from(context), Token.from(item)), P.from_log(conditional.findValue
                         (item).asDouble()));
             }
             return CPX_from(map);

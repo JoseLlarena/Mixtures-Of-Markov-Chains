@@ -1,63 +1,35 @@
 package com.fluent.pgm.new_api;
 
-import static com.fluent.pgm.new_api.Common.id_from;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.hash.HashFunction;
+
+import java.util.concurrent.ExecutionException;
+
+import static com.google.common.hash.Hashing.goodFastHash;
 import static java.lang.String.valueOf;
 
 public interface Token extends Context
 {
-
-    static final long START_ID = id_from("!^!"), END_ID = id_from("!$!"),OOV_ID = id_from("!?!");
-    public static final Token START = new Token()
-    {
-        long id = START_ID;
-
-        public String toString()
-        {
-            return "!^!";
-        }
-
-        public long id()
-        {
-            return id;
-        }
-    };
-    public static final Token OOV = new Token()
-    {
-        long id = id_from(toString());
-
-        public String toString()
-        {
-            return "!?!";
-        }
-
-        public long id()
-        {
-            return id;
-        }
-    };
-    public static final Token END = new Token()
-    {
-        long id = END_ID;
-
-        public String toString()
-        {
-            return "!$!";
-        }
-
-        public long id()
-        {
-            return id;
-        }
-    };
+    static HashFunction hash = goodFastHash(64);
+    static final long START_ID = id_from2("!^!"), END_ID = id_from2("!$!"), OOV_ID = id_from2("!?!");
+    public static final Token
+            START = new Special_Token("!^!",
+            START_ID), END = new Special_Token("!$!", END_ID),
+            OOV = new Special_Token("!?!", OOV_ID);
+    public static Cache<Long, Token> id_to_token = CacheBuilder.newBuilder().maximumSize(100_000).recordStats().build
+            ();
 
     public static Token from(char... letter)
     {
         return Token.from(valueOf(letter));
     }
 
+    public static long id_from2(String letter) {return hash.hashString(letter).asLong();}
+
     public static Token from(String string)
     {
-        long id = id_from(string);
+        long id = id_from2(string);
 
         if (END_ID == id)
             return Token.END;
@@ -66,30 +38,14 @@ public interface Token extends Context
         else if (OOV_ID == id)
             return Token.OOV;
 
-        return new Token()
+        try
         {
-            public String toString()
-            {
-                return string;
-            }
 
-            public int hashCode()
-            {
-                return (int) id;
-            }
-
-            public long id()
-            {
-                return id;
-            }
-
-            public boolean equals(Object o)
-            {
-                return o == this || o instanceof Token && ((Token) o).id() == id;
-            }
-        };
+            return id_to_token.get(id, () -> new Simple_Token(string, id));
+        }
+        catch (ExecutionException e)
+        {
+            return new Simple_Token(string, id);
+        }
     }
-
-    public long id();
-
 }

@@ -11,48 +11,52 @@ public class Seqence
 {
     String a;
     long id;
-    FList<N_gram> n_grams;
+    FList<Ngram> ngrams;
 
     public static Seqence from(String a)
     {
-        FList<N_gram> n_grams = newFList();
+        FList<Ngram> ngrams = newFList();
 
         Token prev = Token.START;
 
         for (char each : a.toCharArray())
         {
-            n_grams.plus(new N_gram(prev, Token.from(each)));
+            ngrams.plus(new Ngram(prev, Token.from(each)));
             prev = Token.from(each);
         }
 
-        n_grams.plus(new N_gram(prev, Token.END));
+        ngrams.plus(new Ngram(prev, Token.END));
 
-        return new Seqence(a, n_grams);
+        long id = id_from(a);
+        return new Seqence(a, ngrams);
     }
 
-    public static Seqence from(Iterable<Token> tokens)
+    public static <I extends Iterable<Token>> Seqence from(I tokens)
     {
-        FList<N_gram> n_grams = newFList();
+        FList<Ngram> ngrams = newFList();
 
         Token prev = Token.START;
 
         for (Token each : tokens)
         {
-            n_grams.plus(new N_gram(prev, (each)));
+            ngrams.plus(new Ngram(prev, each));
             prev = (each);
         }
 
-        n_grams.plus(new N_gram(prev, Token.END));
 
-        return new Seqence(on("").join(tokens), n_grams);
+        ngrams.plus(new Ngram(prev, Token.END));
+
+
+
+        return new Seqence(on(" ").join(tokens), ngrams);
     }
 
 
-    public Seqence(String a, FList<N_gram> n_grams)
+    public Seqence(String a, FList<Ngram> ngrams)
     {
         this.a = a;
-        id = id_from(a);
-        this.n_grams = n_grams;
+
+        this.ngrams = ngrams;
     }
 
     public String toString()
@@ -60,9 +64,9 @@ public class Seqence
         return a;
     }
 
-    public FList<N_gram> n_grams()
+    public FList<Ngram> ngrams()
     {
-        return n_grams;
+        return ngrams;
     }
 
     public int hashCode()
@@ -82,14 +86,25 @@ public class Seqence
 
     public int size()
     {
-        return this.n_grams().size()+1;
+        return this.ngrams().size() + 1;
     }
 
-    public static class N_gram extends oo<Context, Token>
+    public static class Ngram extends oo<Context, Token>
     {
-        public N_gram(Context context, Token token)
+        public Ngram(Context context, Token token)
         {
             super(context, token);
+        }
+
+        public int hashCode()
+        {
+            return (int) (37 * $1.id() + $2.id());
+        }
+
+        public boolean equals(Object o)
+        {
+            return o == this || o instanceof Ngram && ((Ngram) o).$1.id() == $1.id() && ((Ngram) o).$2.id() == $2.id
+                    ();
         }
     }
 }
