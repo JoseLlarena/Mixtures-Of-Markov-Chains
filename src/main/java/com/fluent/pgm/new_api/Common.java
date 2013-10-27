@@ -23,6 +23,8 @@ public interface Common
 
     public static MoMC example_model_1()
     {
+        MPX prior = MPX().p(C1, .3).and(C2, .7);
+
         CPX C1_transitions = CPX_from(_p(A, START, .3), _p(B, START, .7),
                 _p(A, A, .01), _p(B, A, .79), _p(END, A, .2),
                 _p(A, B, .79), _p(B, B, .01), _p(END, B, .2));
@@ -32,8 +34,6 @@ public interface Common
 
         FMap<String, CPX> conditionals = newOrderedFMap();
         conditionals.plus(C1, C1_transitions).plus(C2, C2_transitions);
-
-        MPX prior = MPX().p(C1, .3).and(C2, .7);
 
         return new MoMC(prior, conditionals);
     }

@@ -3,6 +3,7 @@ package com.fluent.pgm.new_api;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
+import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
 import com.fluent.core.oo;
 import com.fluent.core.ooo;
@@ -11,9 +12,11 @@ import com.fluent.math.*;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static com.fluent.collections.Maps.newOrderedFMap;
 import static com.fluent.pgm.new_api.MPX_Builder.MPX;
+import static com.fluent.util.ReadLines.Read_Lines;
 
 public class IO
 {
@@ -29,6 +32,11 @@ public class IO
     public MoMC read_from_json(Path file) throws IOException
     {
         return mapper.readValue(file.toFile(), MoMC.class);
+    }
+
+    public FList<Seqence> read_char_data_from(String data_file) throws IOException
+    {
+        return Read_Lines.from(Paths.get(data_file), Seqence::from_chars_in);
     }
 
     static class MoMC_Serialiser extends JsonSerializer<MoMC>
@@ -122,7 +130,7 @@ public class IO
                 String item = conditional.fieldNames().next();
                 map.plus(Seqence.Ngram.from(Token.from(context), Token.from(item)),
                         P.from_log(conditional.findValue
-                        (item).asDouble()));
+                                (item).asDouble()));
             }
             return CPD_Builder.CPX_from(map);
         }

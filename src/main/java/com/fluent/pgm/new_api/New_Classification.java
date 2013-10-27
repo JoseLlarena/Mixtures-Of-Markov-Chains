@@ -8,7 +8,7 @@ public class New_Classification extends New_Inference
 
     public String classify(Seqence sequence, MoMC model)
     {
-        return joint(sequence, model).max((String the_class, P posterior) -> posterior).$1;
+        return joint(sequence, model).max_as((String the_class, P posterior) -> posterior).$1;
     }
 
     //untested

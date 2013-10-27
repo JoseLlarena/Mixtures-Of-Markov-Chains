@@ -1,6 +1,5 @@
 package com.fluent.pgm.new_api;
 
-import com.fluent.collections.FMap;
 import com.fluent.math.*;
 import com.fluent.specs.unit.AbstractSpec;
 import com.fluent.util.ReadLines;
@@ -11,38 +10,22 @@ import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import static com.fluent.collections.Maps.newOrderedFMap;
+import static com.fluent.collections.Lists.asFList;
 import static com.fluent.math.P.*;
-import static com.fluent.pgm.new_api.CPD_Builder.CPX_from;
-import static com.fluent.pgm.new_api.CPD_Builder._p;
 import static com.fluent.pgm.new_api.IO.IO;
-import static com.fluent.pgm.new_api.MPX_Builder.MPX;
-import static com.fluent.pgm.new_api.Token.END;
-import static com.fluent.pgm.new_api.Token.START;
 import static java.lang.Double.parseDouble;
 
 public class IO_Spec extends AbstractSpec
 {
+    public static final String DATA_FILE = "C:/Users/Jose/project-workspace/Sequensir/src/test/resources/data.txt";
     MoMC model;
     Path file = Paths.get(System.getProperty("user.dir"), "momc.json");
-    Token A = Token.from("a"), B = Token.from("b");
-    CPX A_transitions = CPX_from(_p(A, START, .3), _p(B, START, .7),
-            _p(A, A, .1), _p(B, A, .6), _p(END, A, .3),
-            _p(A, B, .35), _p(B, B, .35), _p(END, B, .3));
-    CPX B_transitions = CPX_from(_p(A, START, .3), _p(B, START, .7),
-            _p(A, A, .1), _p(B, A, .6), _p(END, A, .3),
-            _p(A, B, .35), _p(B, B, .35), _p(END, B, .3));
+
 
     @Before
     public void CONTEXT()
     {
-        FMap<String, CPX> conditionals = newOrderedFMap();
-        conditionals.plus("A", A_transitions).plus("B", B_transitions);
-
-        MPX prior = MPX().p("A", .3).and("B", .7);
-
-
-        model = new MoMC(prior, conditionals);
+        model = Common.example_model_1();
     }
 
     @Test
@@ -50,6 +33,13 @@ public class IO_Spec extends AbstractSpec
     {
         So(P.from_log(parseDouble(new BigDecimal(P(.1).asLog()).toString()))).shouldBe(P(.1));
     }
+
+    @Test
+    public void reads_char_data_from_file() throws Exception
+    {
+        So(IO.read_char_data_from(DATA_FILE)).shouldBe(asFList(Seqence.from_chars_in("aa"),Seqence.from_chars_in("bb")));
+    }
+
 
     @Test
     public void writes_model_to_json_file() throws Exception
@@ -76,7 +66,7 @@ public class IO_Spec extends AbstractSpec
     }
 
     @Test
-    public void reads_mode_from_json_file() throws Exception
+    public void reads_model_from_json_file() throws Exception
     {
         So(IO.write_json(model, file).read_from_json(file) ).shouldBe(model );
     }

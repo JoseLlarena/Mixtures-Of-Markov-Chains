@@ -52,7 +52,7 @@ public class Classification_API
 
     public oo<String, P> maxPosterior(final Sequence sequence, final Mixture mixture)
     {
-        return posterior(sequence, mixture).max((String token, P probability) -> probability);
+        return posterior(sequence, mixture).max_as((String token, P probability) -> probability);
     }
 
     public MPD posterior(final Sequence sequence, final Mixture mixture)

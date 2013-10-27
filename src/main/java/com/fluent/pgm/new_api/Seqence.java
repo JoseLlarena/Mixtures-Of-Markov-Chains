@@ -34,6 +34,29 @@ public class Seqence
         return new Seqence(id_from(a), ngrams);
     }
 
+    public static Seqence from_chars_in(String string)
+    {
+        return Seqence.from(string);
+    }
+
+    public static Seqence from(char... chars)
+    {
+        FList<Ngram> ngrams = newFList();
+
+        Token prev = Token.START;
+
+        for (char each : chars)
+        {
+            ngrams.plus(Ngram.from(prev, Token.from(each)));
+            prev = Token.from(each);
+        }
+
+        ngrams.plus(Ngram.from(prev, Token.END));
+
+        return new Seqence(id_from(String.valueOf(chars)), ngrams);
+    }
+
+
     public static <I extends Iterable<Token>> Seqence from(I tokens)
     {
         FList<Ngram> ngrams = newFList();

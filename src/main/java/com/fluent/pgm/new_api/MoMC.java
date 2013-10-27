@@ -28,6 +28,11 @@ public class MoMC extends oo<MPX, FMap<String, CPX>>
         return $2;
     }
 
+    public FMap<String, CPX> normalised_likelihoods()
+    {
+        return $2;
+    }
+
     public CPX transitions_for(String the_class)
     {
         return $2.get(the_class);
