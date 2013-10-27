@@ -2,57 +2,57 @@ package com.fluent.pgm.new_api;
 
 import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
+import com.fluent.core.F1;
 import com.fluent.core.F2;
 import com.fluent.core.oo;
+import com.fluent.core.ooo;
 import com.fluent.math.*;
-import com.fluent.util.Clock;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.AtomicDouble;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
-import static com.fluent.core.oo.oo;
+import static com.fluent.collections.Lists.newFList;
+import static com.fluent.collections.Maps.newFMap;
+import static com.fluent.core.oo.*;
 import static com.fluent.math.P.*;
 import static com.fluent.pgm.new_api.CPD_Builder.CPX_from;
-import static com.fluent.pgm.new_api.New_Initialisation.Initialisation;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
-import static java.lang.System.out;
-import static java.time.temporal.ChronoUnit.SECONDS;
+import static java.lang.Runtime.getRuntime;
+import static java.util.concurrent.Executors.newFixedThreadPool;
 
 public class New_Estimation extends New_Inference implements New_Optimisation
 {
     public static final New_Estimation Estimation = new New_Estimation();
 
-    public MoMC estimate(FList<Seqence> data)
+    static Counts merge(Collection<Future<Counts>> counts_in_progress) throws Exception
     {
-        AtomicDouble previous = new AtomicDouble(Double.NEGATIVE_INFINITY);
-        AtomicInteger iterator = new AtomicInteger();
+        return newFList(counts_in_progress).throwing_aggregate(new Counts(),
+                (count, future) -> count.add(future.get()));
+    }
 
-        F2<MoMC, FList<Seqence>, MoMC> em_iteration = this::em_iteration;
+    static MoMC maximisation(Counts counts, int N)
+    {
+        FMap<String, DecimalCounter<Ngram>> ngram_counts = counts.$2;
+        DecimalCounter<oo<String, Context>> context_counts = counts.$3;
+        FMap<String, CPX> new_conditionals = ngram_counts.apply_to_values(to_conditionals(context_counts));
 
-        return optimise(Initialisation.initialise_with(data), em_iteration.with_arg_2(data).append
-                (model ->
-                {
-                    final double likelihood = likelihood(model, data).asLog();
-                    out.printf("%s [%d] %f %s %s %n",
-                            DateTimeFormat.fullDateTime().print(DateTime.now()),
-                            iterator.getAndIncrement(),
-                            likelihood,
-                            2 + previous.get() - likelihood > .1,
-                            P.terms_to_sum.stats());
+        DecimalCounter<String> prior_counts = counts.$1;
+        MPX new_priors = MPX.from(prior_counts.applyToValues(count -> P(count / N)));
 
-                    previous.set(likelihood);
+        return new MoMC(new_priors, new_conditionals);
+    }
 
-                })
-                ::of, Clock.tickFor(2, SECONDS));
+    static F2<String, DecimalCounter<Ngram>, CPX> to_conditionals(DecimalCounter<oo<String, Context>>
+                                                                          conditional_context_counts)
+    {
+        return (tag, counts) -> CPX_from(counts.apply_to_values(
+                (ngram, count) -> P(count / conditional_context_counts.get(oo(tag, ngram.context())))));
     }
 
     //FIXME  k(k + n + ngram(n)) -> kn
-    MoMC em_iteration(MoMC model, FList<Seqence> data)
+    public MoMC serial_em_iteration(MoMC model, FList<Seqence> data)
     {
         FMap<String, DecimalCounter<Ngram>> ngram_counts = model.tags().zip(tag -> new DecimalCounter<>());
         DecimalCounter<String> prior_counts = new DecimalCounter<>();
@@ -81,52 +81,89 @@ public class New_Estimation extends New_Inference implements New_Optimisation
         return new MoMC(new_priors, new_conditionals);
     }
 
-
-
-    F2<String, DecimalCounter<Ngram>, CPX> to_conditionals(DecimalCounter<oo<String, Context>>
-                                                                   conditional_context_counts)
+    public MoMC parallel_em_iteration(MoMC model, FList<Seqence> data)
     {
-        return (tag, counts) -> CPX_from(counts.apply_to_values(
-                (ngram, count) -> P(count / conditional_context_counts.get(oo(tag, ngram.context())))));
+        int thread_count = getRuntime().availableProcessors();
+        ExecutorService executor = newFixedThreadPool(thread_count);
+
+        F1<FList<Seqence>, Callable<Counts>> expectation = split -> () -> expectation(model, split);
+
+        Counts counts = null;
+        try
+        {
+            counts = merge(executor.invokeAll(data.split(thread_count).apply(expectation)));
+        }
+        catch (Exception cause)
+        {
+            throw new RuntimeException(cause);
+        }
+        finally
+        {
+            executor.shutdown();
+        }
+
+        return maximisation(counts, data.size());
     }
 
-    static class Tag_Context extends oo<String, Context>
+    Counts expectation(MoMC model, FList<Seqence> data)
     {
-        static Cache<Long, Tag_Context> id_to_tag_context = CacheBuilder.newBuilder()
-                .maximumSize(1000_000)
-                .build();
-        long id;
-        static Random r = new Random(234);
+        FMap<String, DecimalCounter<Ngram>> ngram_counts = model.tags().zip(tag -> new DecimalCounter<>());
+        DecimalCounter<String> prior_counts = new DecimalCounter<>();
+        DecimalCounter<oo<String, Context>> context_counts = new DecimalCounter<>();
 
-        public static Tag_Context from(String $1, Context $2)
+        data.each(datum ->
+                {
+                    posterior_density(datum, model).each((tag, p) ->
+                            {
+                                double weight = p.toDouble();
+                                prior_counts.plus(tag, weight);
+
+                                datum.ngrams().each(ngram ->
+                                        {
+                                            context_counts.plus(oo(tag, ngram.context()), weight);
+                                            ngram_counts.get(tag).plus(ngram, weight);
+                                        });
+                            });
+                }
+        );
+
+        return new Counts(prior_counts, ngram_counts, context_counts);
+    }
+
+    static class Counts extends ooo<DecimalCounter<String>, FMap<String, DecimalCounter<Ngram>>,
+            DecimalCounter<oo<String, Context>>>
+    {
+
+        Counts(DecimalCounter<String> $1,
+               FMap<String, DecimalCounter<Ngram>> $2,
+               DecimalCounter<oo<String, Context>> $3)
         {
-            return new Tag_Context($1, $2, r.nextLong());
-//            try
-//            {
-//                long id = Common.hash.newHasher().putString($1).putLong($2.id()).hash().asLong();
-//                return id_to_tag_context.get(id, () -> new Tag_Context($1, $2, id));
-//            }
-//            catch (ExecutionException e)
-//            {
-//                long id = Common.hash.newHasher().putString($1).putLong($2.id()).hash().asLong();
-//                return new Tag_Context($1, $2, id);
-//            }
+            super($1, $2, $3);
         }
 
-        Tag_Context(String $1, Context $2, long id)
+        Counts()
         {
-            super($1, $2);
-
+            this(new DecimalCounter<>(), newFMap(), new DecimalCounter<>());
         }
 
-        public boolean equals(Object object)
+        Counts add(Counts to_this)
         {
-            return object == this || object instanceof Tag_Context && ((Tag_Context) object).id == id;
-        }
+            DecimalCounter<String> prior_counts = $1;
+            FMap<String, DecimalCounter<Ngram>> ngram_counts = $2;
+            DecimalCounter<oo<String, Context>> context_counts = $3;
 
-        public int hashCode()
-        {
-            return (int) id;
+            to_this.$1.each((tag, count) -> prior_counts.plus(tag, count));
+
+            to_this.$2.each((tag, counts) -> counts.each((ngram, count) ->
+                    {
+                        ngram_counts.putIfAbsent(tag, new DecimalCounter<Ngram>());
+                        ngram_counts.get(tag).plus(ngram, count);
+                    }
+            ));
+
+            to_this.$3.each((tag_context, count) -> context_counts.plus(tag_context, count));
+
+            return this;
         }
     }
 }

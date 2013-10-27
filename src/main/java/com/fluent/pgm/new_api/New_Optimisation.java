@@ -12,7 +12,7 @@ public interface New_Optimisation
 
     public default MoMC optimise(MoMC initial, OP1<MoMC> em_iteration)
     {
-        return optimise(initial, em_iteration, Clock.tickFor(10, SECONDS));
+        return optimise(initial, em_iteration, Clock.tickFor(2, SECONDS));
     }
 
     public default MoMC optimise(MoMC initial, OP1<MoMC> em_iteration, Clock clock)

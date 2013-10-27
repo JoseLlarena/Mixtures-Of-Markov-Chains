@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
+import com.fluent.core.F1;
 import com.fluent.core.oo;
 import com.fluent.core.ooo;
 import com.fluent.math.*;
@@ -36,7 +37,12 @@ public class IO
 
     public FList<Seqence> read_char_data_from(String data_file) throws IOException
     {
-        return Read_Lines.from(Paths.get(data_file), Seqence::from_chars_in);
+        return read_char_data_from(data_file,Seqence::from_chars_in);
+    }
+
+    public FList<Seqence> read_char_data_from(String data_file, F1<String, Seqence> pipeline) throws IOException
+    {
+        return Read_Lines.from(Paths.get(data_file),pipeline);
     }
 
     static class MoMC_Serialiser extends JsonSerializer<MoMC>

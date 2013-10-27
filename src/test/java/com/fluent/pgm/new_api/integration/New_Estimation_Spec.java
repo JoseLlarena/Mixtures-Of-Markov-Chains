@@ -14,8 +14,8 @@ import java.nio.file.Paths;
 
 import static com.fluent.collections.Lists.asFList;
 import static com.fluent.collections.Lists.newFList;
+import static com.fluent.pgm.new_api.Easy.Easy;
 import static com.fluent.pgm.new_api.New_Classification.New_Classification;
-import static com.fluent.pgm.new_api.New_Estimation.Estimation;
 import static com.fluent.pgm.new_api.New_Inference.New_Inference;
 import static java.lang.System.out;
 
@@ -32,12 +32,14 @@ public class New_Estimation_Spec extends AbstractSpec
         out.println(DateTimeFormat.fullDateTime().print(DateTime.now()));
 
         FList<Seqence> data = ReadLines.INSTANCE.from(
-                Paths.get("C:\\Users\\Jose\\project-workspace\\Sequensir\\src\\main\\resources\\langs.txt"),
+                Paths.get("C:/Users/Jose/project-workspace/Sequensir/src/main/resources/langs.txt"),
                 line -> Seqence.from(newFList(process(line), Token::from)),
-                line -> !line.isEmpty());
+                line -> true);
 
         out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " DATA READ IN");
-        MoMC model = Estimation.estimate(data);
+        MoMC model = Easy.estimate_from(
+                "C:/Users/Jose/project-workspace/Sequensir/src/main/resources/langs.txt",
+                line -> Seqence.from(newFList(process(line), Token::from)));
         out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " FINISHED TRAINING");
 
         //        FList<Seqence> raw_data =
@@ -48,7 +50,7 @@ public class New_Estimation_Spec extends AbstractSpec
         //                        line -> Seqence.from(newFList(line.split("\\s+"), Token::from)),
         //                        line -> true);
 
-        data.select(d -> Math.random() > .9).apply((datum) -> New_Classification.classify(datum,
+        data.select(d -> Math.random() > 0).apply((datum) -> New_Classification.classify(datum,
                 model) + " -> " + datum).forEach(out::println);
 
     }

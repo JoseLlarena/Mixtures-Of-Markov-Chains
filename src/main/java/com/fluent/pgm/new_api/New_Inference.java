@@ -20,7 +20,7 @@ public class New_Inference
                 .apply((a_class, prior) -> oo(a_class, prior.x(conditional(sequence, model.transitions_for(a_class)))));
     }
 
-    //untested
+
     public FMap<String, P> posterior_density(Seqence sequence, MoMC model)
     {
         FMap<String, P> joint_pdf = joint(sequence, model);
@@ -28,36 +28,6 @@ public class New_Inference
         P marginal = marginal_from(joint_pdf);
 
         return joint_pdf.applyToValues(joint -> joint.div(marginal));
-    }
-
-    public FMap<String, P> posterior_density(Seqence sequence, MPX prior, FMap<String, NLF> inverse_likelihoods)
-    {
-        return prior.apply_to_values((tag, p) -> P.from_log(p.asLog() + inverse_likelihood(sequence,
-                inverse_likelihoods.get(tag))));
-
-    }
-
-    double inverse_likelihood(Seqence sequence, NLF inverse_likelihood)
-    {
-        return sequence.ngrams().aggregate(0., (like, ngram) -> like + inverse_likelihood.of(ngram));
-    }
-
-    public FMap<String, NLF> inverse_likelihoods(MoMC model)
-    {
-        FMap<String, NLF> f = model.tags().zip(tag -> new NLF());
-
-        model.transitions().each((tag, transitions) ->
-                transitions.forEach(triple ->
-                        {
-                            Ngram ngram = Ngram.from(triple.$1, triple.$2);
-                            f.get(tag).plus(ngram, triple.$3.asLog() - marginal_from(joint(ngram,
-                                    model)).asLog());
-                        }
-
-                )
-        );
-
-        return f;
     }
 
     public FMap<String, P> joint(Ngram ngram, MoMC model)
