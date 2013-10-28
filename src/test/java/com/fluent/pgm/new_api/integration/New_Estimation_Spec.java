@@ -1,6 +1,7 @@
 package com.fluent.pgm.new_api.integration;
 
 import com.fluent.collections.FList;
+import com.fluent.pgm.new_api.Common;
 import com.fluent.pgm.new_api.MoMC;
 import com.fluent.pgm.new_api.Seqence;
 import com.fluent.pgm.new_api.Token;
@@ -11,6 +12,7 @@ import org.joda.time.format.DateTimeFormat;
 import org.junit.Test;
 
 import java.nio.file.Paths;
+import java.util.Random;
 
 import static com.fluent.collections.Lists.asFList;
 import static com.fluent.collections.Lists.newFList;
@@ -31,12 +33,9 @@ public class New_Estimation_Spec extends AbstractSpec
     {
         out.println(DateTimeFormat.fullDateTime().print(DateTime.now()));
 
-        FList<Seqence> data = ReadLines.INSTANCE.from(
-                Paths.get("C:/Users/Jose/project-workspace/Sequensir/src/main/resources/langs.txt"),
-                line -> Seqence.from(newFList(process(line), Token::from)),
-                line -> true);
+        Random r = new Random(Common.SEED_1);
 
-        out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " DATA READ IN");
+
         MoMC model = Easy.estimate_from(
                 "C:/Users/Jose/project-workspace/Sequensir/src/main/resources/langs.txt",
                 line -> Seqence.from(newFList(process(line), Token::from)));
@@ -50,7 +49,11 @@ public class New_Estimation_Spec extends AbstractSpec
         //                        line -> Seqence.from(newFList(line.split("\\s+"), Token::from)),
         //                        line -> true);
 
-        data.select(d -> Math.random() > 0).apply((datum) -> New_Classification.classify(datum,
+        FList<Seqence> data = ReadLines.INSTANCE.from(
+                Paths.get("C:/Users/Jose/project-workspace/Sequensir/src/main/resources/langs.txt"),
+                line -> Seqence.from(newFList(process(line), Token::from)),
+                line -> r.nextDouble() > .99);
+        data .apply((datum) -> New_Classification.classify(datum,
                 model) + " -> " + datum).forEach(out::println);
 
     }

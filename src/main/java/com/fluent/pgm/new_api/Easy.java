@@ -15,6 +15,7 @@ import static com.fluent.pgm.new_api.New_Estimation.Estimation;
 import static com.fluent.pgm.new_api.New_Inference.New_Inference;
 import static com.fluent.pgm.new_api.New_Initialisation.Initialisation;
 import static com.fluent.pgm.new_api.New_Optimisation.Optimisation;
+import static java.lang.System.out;
 
 public class Easy
 {
@@ -46,8 +47,8 @@ public class Easy
     public MoMC estimate_from(String data_file, F1<String,Seqence> pipeline) throws Exception
     {
         FList<Seqence> data = io.read_char_data_from(data_file,pipeline);
-
-        F2<MoMC, FList<Seqence>, MoMC> em = estimation::parallel_em_iteration;
+        out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " DATA READ IN");
+        F2<MoMC, FList<Seqence>, MoMC> em = estimation::concurrent_em_iteration;
 
 
         AtomicDouble previous = new AtomicDouble(Double.NEGATIVE_INFINITY);
@@ -56,7 +57,7 @@ public class Easy
                 (model ->
                         {
                             final double likelihood = New_Inference.likelihood(model, data).asLog();
-                            System.out.printf("%s [%d] %f %s %s %n",
+                            out.printf("%s [%d] %f %s %s %n",
                                     DateTimeFormat.fullDateTime().print(DateTime.now()),
                                     iterator.getAndIncrement(),
                                     likelihood,

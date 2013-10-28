@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Random;
 
 import static com.fluent.collections.Maps.newOrderedFMap;
 import static com.fluent.pgm.new_api.MPX_Builder.MPX;
@@ -42,7 +43,8 @@ public class IO
 
     public FList<Seqence> read_char_data_from(String data_file, F1<String, Seqence> pipeline) throws IOException
     {
-        return Read_Lines.from(Paths.get(data_file),pipeline);
+        Random r = new Random(Common.SEED_1);
+        return Read_Lines.from(Paths.get(data_file), pipeline, line -> r.nextDouble()> 0.);
     }
 
     static class MoMC_Serialiser extends JsonSerializer<MoMC>
