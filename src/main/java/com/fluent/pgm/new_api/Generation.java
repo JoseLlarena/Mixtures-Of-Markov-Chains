@@ -22,7 +22,7 @@ public class Generation
 
         while (true)
         {
-            final Token symbol = Token.from(sample(cpd.mpd_from(context), random));
+            final Token symbol = Token.from(sample(cpd.mpd_from(context).as_map(), random));
 
             if (symbol != Token.END)
             {
@@ -63,7 +63,7 @@ public class Generation
     {
         Random random = new Random(seed);
 
-        return sequences_from(generate_classes(N, model, random), model.transitions(), random);
+        return sequences_from(generate_classes(N, model, random), model.transitions_per_tag(), random);
     }
 
     FList<Seqence> sequences_from(FList<String> classes, FMap<String, CPX> transitions, Random random)
@@ -73,7 +73,7 @@ public class Generation
 
     FList<String> generate_classes(int N, MoMC model, Random random)
     {
-        return newFList(N, () -> sample(model.prior(), random));
+        return newFList(N, () -> sample(model.prior().as_map(), random));
     }
 
 }

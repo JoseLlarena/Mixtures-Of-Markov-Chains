@@ -1,6 +1,7 @@
 package com.fluent.pgm.new_api;
 
 import com.fluent.collections.FMap;
+import com.fluent.collections.FSet;
 import com.fluent.core.F2;
 import com.fluent.core.oo;
 import com.fluent.core.ooo;
@@ -136,9 +137,9 @@ public class CPD_Builder
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
 
-            Simple_CPD ooos = (Simple_CPD) o;
+            Simple_CPD other = (Simple_CPD) o;
 
-            if (!map.equals(ooos.map)) return false;
+            if (!map.equals(other.map)) return false;
 
             return true;
         }
@@ -158,7 +159,12 @@ public class CPD_Builder
             return map.get(Ngram.from(context, token), ZERO);
         }
 
-        public MPX mpd_from(Token context)
+        public FSet<Token> tokens()
+        {
+            return map.keys().apply(Ngram::token);
+        }
+
+        public MPX mpd_from(Context context)
         {
             final F2<Ngram, P, Boolean> with_context = (n_gram, p) -> n_gram.$1.equals(context);
 

@@ -15,7 +15,7 @@ public class EM_Counter<ITEM> extends FConcurrentHashMap<ITEM, DoubleAdder>
 
     public Double count_of(final ITEM input)
     {
-        return getOrDefault(input, new DoubleAdder()).sum();
+        return get(input, new DoubleAdder()).sum();
     }
 
 }

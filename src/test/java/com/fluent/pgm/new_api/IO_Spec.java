@@ -37,7 +37,7 @@ public class IO_Spec extends AbstractSpec
     @Test
     public void reads_char_data_from_file() throws Exception
     {
-        So(IO.read_char_data_from(DATA_FILE)).shouldBe(asFList(Seqence.from_chars_in("aa"),Seqence.from_chars_in("bb")));
+        So(IO.read_char_data_from(DATA_FILE)).shouldBe(asFList(Seqence.from_chars("aa"),Seqence.from_chars("bb")));
     }
 
 

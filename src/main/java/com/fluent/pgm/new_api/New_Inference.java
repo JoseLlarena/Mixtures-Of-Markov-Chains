@@ -6,20 +6,18 @@ import com.fluent.collections.FMap;
 import com.fluent.core.F2;
 import com.fluent.math.*;
 
-import static com.fluent.core.oo.*;
 import static com.fluent.math.P.*;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
 
-public class New_Inference
+public class New_Inference extends Viterbi
 {
     public static final New_Inference New_Inference = new New_Inference();
 
     public FMap<String, P> joint(Seqence sequence, MoMC model)
     {
-        return model.prior()
-                .apply((a_class, prior) -> oo(a_class, prior.x(conditional(sequence, model.transitions_for(a_class)))));
+        return model.prior().as_map()
+                .apply_to_values((tag, prior) -> prior.x(conditional(sequence, model.transitions_for(tag))));
     }
-
 
     public FMap<String, P> posterior_density(Seqence sequence, MoMC model)
     {
@@ -32,7 +30,7 @@ public class New_Inference
 
     public FMap<String, P> joint(Ngram ngram, MoMC model)
     {
-        return model.prior().apply_to_values((tag, prior) ->
+        return model.prior().as_map().apply_to_values((tag, prior) ->
                 prior.x(model.transitions_for(tag).p(ngram.token(), ngram.context())));
     }
 
@@ -68,4 +66,10 @@ public class New_Inference
     {    //FIXME IMPROVE nlog + n -> n
         return data.sorted(datum -> marginal(datum, model).asLog() / datum.size()).first(n);
     }
+
+    public Seqence complete(Seqence datum, MoMC model)
+    {
+        return null;//best_path_in(path_scores_from(datum, model));
+    }
+
 }

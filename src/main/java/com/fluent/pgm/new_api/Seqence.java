@@ -8,20 +8,24 @@ import com.google.common.hash.Hasher;
 
 import java.util.concurrent.ExecutionException;
 
+import static com.fluent.collections.Lists.asFList;
 import static com.fluent.collections.Lists.newFList;
 import static com.fluent.pgm.new_api.Common.id_from;
+import static com.fluent.pgm.new_api.Token.START;
 import static com.google.common.base.Joiner.on;
+import static java.util.Arrays.asList;
 
 public class Seqence
 {
     long id;
     FList<Ngram> ngrams;
 
+    @Deprecated
     public static Seqence from(String a)
     {
         FList<Ngram> ngrams = newFList();
 
-        Token prev = Token.START;
+        Token prev = START;
 
         for (char each : a.toCharArray())
         {
@@ -34,34 +38,44 @@ public class Seqence
         return new Seqence(id_from(a), ngrams);
     }
 
-    public static Seqence from_chars_in(String string)
+    public static Seqence from_chars(String string)
     {
-        return Seqence.from(string);
+        return Seqence.from(string.toCharArray());
+    }
+
+    public static Seqence from_words_in(String string)
+    {
+        return Seqence.from(newFList(string.split("\\s+")).apply(word -> Token.from(word)));
     }
 
     public static Seqence from(char... chars)
     {
         FList<Ngram> ngrams = newFList();
 
-        Token prev = Token.START;
+        Token prev = START;
 
+        Hasher hasher = Common.hash.newHasher();
         for (char each : chars)
         {
             ngrams.plus(Ngram.from(prev, Token.from(each)));
             prev = Token.from(each);
+            hasher.putLong(Token.from(each).id());
         }
 
         ngrams.plus(Ngram.from(prev, Token.END));
 
-        return new Seqence(id_from(String.valueOf(chars)), ngrams);
+        return new Seqence(hasher.hash().asLong(), ngrams);
     }
 
-
-    public static <I extends Iterable<Token>> Seqence from(I tokens)
+    public static  Seqence from(Token... tokens)
+    {
+        return from(asList(tokens));
+    }
+    public static <TOKENS extends Iterable<Token>> Seqence from(TOKENS tokens)
     {
         FList<Ngram> ngrams = newFList();
 
-        Token prev = Token.START;
+        Token prev = START;
 
         Hasher hasher = Common.hash.newHasher();
 
@@ -86,7 +100,7 @@ public class Seqence
 
     public String toString()
     {
-        return on(" ").join(ngrams.apply(ngram -> ngram.$2));
+        return on(" ").join(symbols());
     }
 
     public FList<Ngram> ngrams()
@@ -97,6 +111,11 @@ public class Seqence
     public int hashCode()
     {
         return (int) id;
+    }
+
+     FList<Token> symbols()
+    {
+        return asFList(START).plus(ngrams.apply(ngram -> ngram.token()));
     }
 
     public long id()
@@ -114,11 +133,16 @@ public class Seqence
         return ngrams.size() + 1;
     }
 
+    public Token at(int i)
+    {
+        return i == 0 ? START : ngrams.get(i-1).token();
+    }
+
     public static class Ngram extends oo<Context, Token>
     {
         static Cache<Long, Ngram> id_to_ngram = CacheBuilder.newBuilder()
                 .maximumSize(10_000_000)
-                .recordStats().build();
+                .build();
         long id;
 
         public static Ngram from(Context context, Token token)
@@ -126,13 +150,18 @@ public class Seqence
             try
             {
                 long id = Common.hash.newHasher().putLong(context.id()).putLong(token.id()).hash().asLong();
-                return id_to_ngram.get(id, () -> new Ngram(context, token,id));
+                return id_to_ngram.get(id, () -> new Ngram(context, token, id));
             }
             catch (ExecutionException e)
             {
-                long id = Common.hash.newHasher().putLong(context.id()).putLong(token.id()).hash().asLong();
-                return new Ngram(context, token,id);
+                throw new RuntimeException(e);
             }
+        }
+
+        Ngram(Context context, Token token, long id)
+        {
+            super(context, token);
+            this.id = id;
         }
 
         public Context context()
@@ -143,12 +172,6 @@ public class Seqence
         public Token token()
         {
             return $2;
-        }
-
-        Ngram(Context context, Token token, long id)
-        {
-            super(context, token);
-            this.id = id;
         }
 
         public int hashCode()

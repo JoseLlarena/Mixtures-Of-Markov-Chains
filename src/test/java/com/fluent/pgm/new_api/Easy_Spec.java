@@ -25,7 +25,7 @@ public class Easy_Spec extends AbstractSpec
         GIVEN(init.initialise_with(EMPTY_FLIST)).RETURNS(expected_model) ;
         GIVEN(optimisation.optimise(eq(expected_model), any(OP1.class))).RETURNS(expected_model);
 
-        WHEN(new Easy(io, init, dummy(New_Estimation.class), optimisation).estimate_from(data_file));
+        WHEN(new Easy(io, null,init, dummy(New_Estimation.class), optimisation).estimate_from(data_file));
 
         THEN(it).shouldBe(expected_model);
     }

@@ -28,12 +28,12 @@ public interface Common
         CPX C1_transitions = CPX_from(_p(A, START, .3), _p(B, START, .7),
                 _p(A, A, .01), _p(B, A, .79), _p(END, A, .2),
                 _p(A, B, .79), _p(B, B, .01), _p(END, B, .2));
+
         CPX C2_transitions = CPX_from(_p(X, START, .6), _p(Y, START, .4),
                 _p(X, X, .69), _p(Y, X, .01), _p(END, X, .3),
                 _p(X, Y, .01), _p(Y, Y, .69), _p(END, Y, .3));
 
-        FMap<String, CPX> conditionals = newOrderedFMap();
-        conditionals.plus(C1, C1_transitions).plus(C2, C2_transitions);
+        FMap conditionals = newOrderedFMap().plus(C1, C1_transitions).plus(C2, C2_transitions);
 
         return new MoMC(prior, conditionals);
     }

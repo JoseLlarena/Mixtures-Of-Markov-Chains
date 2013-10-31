@@ -23,20 +23,15 @@ public class MoMC extends oo<MPX, FMap<String, CPX>>
         return $1;
     }
 
-    public FMap<String, CPX> transitions()
+    public FMap<String, CPX> transitions_per_tag()
     {
         return $2;
     }
 
-    public FMap<String, CPX> normalised_likelihoods()
+    public CPX transitions_for(String tag)
     {
-        return $2;
+        return transitions_per_tag().get(tag);
     }
 
-    public CPX transitions_for(String the_class)
-    {
-        return $2.get(the_class);
-    }
-
-    public FSet<String> tags() {return $1.keys();}
+    public FSet<String> tags() {return prior().as_map().keys();}
 }

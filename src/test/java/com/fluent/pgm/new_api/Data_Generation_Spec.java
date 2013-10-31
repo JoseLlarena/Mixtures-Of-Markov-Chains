@@ -27,15 +27,15 @@ public class Data_Generation_Spec extends AbstractSpec
     @Test//FIXME WE WANT TO TEST SEQUENCES ARE GENERATED WITH CORRECT FREQUENCY
     public void generates_data_from_momc() throws Exception
     {
-        THEN(Generation.generate(N = 2, model, SEED_1)).shouldBe(asFList(Seqence.from("a"),
-                Seqence.from("a")));
+        THEN(Generation.generate(N = 2, model, SEED_1)).shouldBe(asFList(Seqence.from_chars("a"),
+                Seqence.from_chars("a")));
     }
 
     @Test//FIXME WE WANT TO TEST SEQUENCES ARE GENERATED WITH CORRECT FREQUENCY
     public void generates_sequences_from_classes() throws Exception
     {
-        THEN(Generation.sequences_from(asFList(C1, C1), model.transitions(), new Random(SEED_1))).shouldBe(asFList
-                (Seqence.from("ab"), Seqence.from("b")));
+        THEN(Generation.sequences_from(asFList(C1, C1), model.transitions_per_tag(), new Random(SEED_1))).shouldBe(asFList
+                (Seqence.from_chars("ab"), Seqence.from_chars("b")));
     }
 
     @Test
