@@ -14,37 +14,60 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Random;
 
+import static com.fluent.collections.Lists.newFList;
 import static com.fluent.collections.Maps.newOrderedFMap;
+import static com.fluent.core.oo.*;
 import static com.fluent.pgm.new_api.MPX_Builder.MPX;
+import static com.fluent.pgm.new_api.Seqence.Ngram;
 import static com.fluent.util.ReadLines.Read_Lines;
+import static java.nio.file.Files.list;
+import static java.util.stream.Collectors.toCollection;
 
 public class IO
 {
     public static final IO IO = new IO();
     static final ObjectMapper mapper = (new ObjectMapper());
 
-    public IO write_json(MoMC model, Path file) throws IOException
+    public IO to_json(MoMC model, Path file) throws IOException
     {
         mapper.writeValue(file.toFile(), model);
         return this;
     }
 
-    public MoMC read_from_json(Path file) throws IOException
+    public MoMC model_from(Path file) throws IOException
     {
         return mapper.readValue(file.toFile(), MoMC.class);
     }
 
-    public FList<Seqence> read_char_data_from(String data_file) throws IOException
+    public FList<Seqence> char_data_from(String data_file) throws IOException
     {
-        return read_char_data_from(data_file,Seqence::from_chars);
+        return data_from(data_file, Seqence::from_chars);
     }
 
-    public FList<Seqence> read_char_data_from(String data_file, F1<String, Seqence> pipeline) throws IOException
+    public FList<Seqence> data_from(String data_file, F1<String, Seqence> pipeline) throws IOException
     {
-        Random r = new Random(Common.SEED_1);
-        return Read_Lines.from(Paths.get(data_file), pipeline, line -> r.nextDouble()> 2./3.);
+        return Read_Lines.from(Paths.get(data_file), pipeline);
+    }
+
+    public FList<oo<Seqence, String>> tagged_char_data_from(String data_directory) throws Exception
+    {
+        FList<Path> files = list(Paths.get(data_directory)).collect(toCollection(() -> newFList( )));
+
+        final F1<Path, F1<String, oo<Seqence, String>>> path_to_line_to_tagged_sequence =
+                path -> line -> oo(Seqence.from_chars(line), path.toFile().getName().split("\\.txt")[0]);
+
+        return files.throwing_flatten(file -> Read_Lines.from(file, path_to_line_to_tagged_sequence.of(file)));
+    }
+
+    public FList<oo<Seqence, String>> tagged_word_data_from(String data_directory) throws Exception
+    {
+        FList<Path> files = list(Paths.get(data_directory)).collect(toCollection(() -> newFList( )));
+
+        final F1<Path, F1<String, oo<Seqence, String>>> path_to_line_to_tagged_sequence =
+                path -> line -> oo(Seqence.from_words(line), path.toFile().getName().split("\\.txt")[0]);
+
+        return files.throwing_flatten(file -> Read_Lines.from(file, path_to_line_to_tagged_sequence.of(file)));
     }
 
     static class MoMC_Serialiser extends JsonSerializer<MoMC>
@@ -129,16 +152,15 @@ public class IO
 
         static CPX conditional_from(JsonNode entries)
         {
-            FMap<Seqence.Ngram, P> map = newOrderedFMap();
+            FMap<Ngram, P> map = newOrderedFMap();
 
             for (JsonNode entry : entries)
             {
                 String context = entry.fieldNames().next();
                 JsonNode conditional = entry.findValue(context);
                 String item = conditional.fieldNames().next();
-                map.plus(Seqence.Ngram.from(Token.from(context), Token.from(item)),
-                        P.from_log(conditional.findValue
-                                (item).asDouble()));
+                map.plus(Ngram.from(Token.from(context), Token.from(item)), P.from_log(conditional.findValue
+                        (item).asDouble()));
             }
             return CPD_Builder.CPX_from(map);
         }

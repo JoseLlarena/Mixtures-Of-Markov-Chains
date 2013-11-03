@@ -15,7 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import static com.fluent.collections.Lists.newFList;
+import static com.fluent.collections.Lists.parse;
 import static com.fluent.pgm.new_api.IO.IO;
 import static com.fluent.pgm.new_api.New_Estimation.Estimation;
 import static com.fluent.pgm.new_api.New_Inference.New_Inference;
@@ -62,9 +62,9 @@ public class Easy
 
     public MoMC estimate_from(String data_file, F1<String, Seqence> pipeline) throws Exception
     {
-        FList<Seqence> data = io.read_char_data_from(data_file, pipeline);
+        FList<Seqence> data = io.data_from(data_file, pipeline);
 
-        F3<MoMC, FList<FList<Seqence>>, ExecutorService, MoMC> em = estimation::em_iteration;
+        F3<MoMC, FList<FList<Seqence>>, ExecutorService, MoMC> em = estimation::reestimate;
 
         F2<MoMC, ExecutorService, MoMC> em_with_data = em.with_arg_2(data.split(thread_count())).append(out(data));
 
@@ -75,6 +75,33 @@ public class Easy
         executor.shutdown();
 
         return model;
+    }
+
+
+    public String complete_characters(String datum, String model_file) throws IOException
+    {
+        FList<Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("¬") ? OOV : Token.from(chunk))
+                .minus(Token.from(""));
+
+        return inference.complete(Seqence.from(tokens), io.model_from(Paths.get(model_file))).toString().replaceAll
+                ("\\s+", "");
+    }
+
+    public MoMC mixture_from_tagged_data(String data_directory, String output_file) throws Exception
+    {
+        MoMC model = estimation.estimate(io.tagged_char_data_from(data_directory));
+
+        io.to_json(model, Paths.get(output_file));
+
+        return model;
+    }
+
+    public String tag(String untagged, String model_file) throws IOException
+    {
+        final Seqence sequence = Seqence.from_chars(untagged);
+        final MoMC model = io.model_from(Paths.get(model_file));
+
+        return  inference.joint(sequence, model).max_as(( tag,posterior) -> posterior).$1;
     }
 
     Consumer<? super MoMC> out(FList<Seqence> data)
@@ -94,14 +121,6 @@ public class Easy
                     previous.set(likelihood);
 
                 };
-    }
-
-    public String complete(String datum, String model_file) throws IOException
-    {
-        FList<Token> tokens = newFList(datum.split("")).apply(chunk -> chunk.equals("¬") ? OOV : Token.from(chunk))
-                .minus(Token.from(""));
-
-        return inference.complete(Seqence.from(tokens), io.read_from_json(Paths.get(model_file))).toString();
     }
 
 }

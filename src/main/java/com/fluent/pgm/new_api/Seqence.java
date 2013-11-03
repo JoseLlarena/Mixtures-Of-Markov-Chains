@@ -11,6 +11,7 @@ import java.util.concurrent.ExecutionException;
 import static com.fluent.collections.Lists.asFList;
 import static com.fluent.collections.Lists.newFList;
 import static com.fluent.pgm.new_api.Common.id_from;
+import static com.fluent.pgm.new_api.Token.END;
 import static com.fluent.pgm.new_api.Token.START;
 import static com.google.common.base.Joiner.on;
 import static java.util.Arrays.asList;
@@ -43,7 +44,7 @@ public class Seqence
         return Seqence.from(string.toCharArray());
     }
 
-    public static Seqence from_words_in(String string)
+    public static Seqence from_words(String string)
     {
         return Seqence.from(newFList(string.split("\\s+")).apply(word -> Token.from(word)));
     }
@@ -100,7 +101,7 @@ public class Seqence
 
     public String toString()
     {
-        return on(" ").join(symbols());
+        return on(" ").join(symbols().minus(START).minus(END));
     }
 
     public FList<Ngram> ngrams()

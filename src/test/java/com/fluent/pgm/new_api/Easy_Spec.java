@@ -21,7 +21,7 @@ public class Easy_Spec extends AbstractSpec
     @Test
     public void estimates_momc_from_file() throws Exception
     {
-        GIVEN(io.read_char_data_from(data_file)).RETURNS(EMPTY_FLIST);
+        GIVEN(io.char_data_from(data_file)).RETURNS(EMPTY_FLIST);
         GIVEN(init.initialise_with(EMPTY_FLIST)).RETURNS(expected_model) ;
         GIVEN(optimisation.optimise(eq(expected_model), any(OP1.class))).RETURNS(expected_model);
 

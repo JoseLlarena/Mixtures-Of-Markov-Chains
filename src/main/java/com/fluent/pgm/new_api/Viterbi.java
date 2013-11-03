@@ -3,6 +3,7 @@ package com.fluent.pgm.new_api;
 import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
 import com.fluent.collections.FSet;
+import com.fluent.core.F1;
 import com.fluent.core.F2;
 import com.fluent.core.oo;
 import com.fluent.core.ooo;
@@ -25,29 +26,39 @@ public class Viterbi
 {
     public static final Viterbi Viterbi = new Viterbi();
     static final P OOV_MISMATCH = P(.1);
-    F2<Token, Context, P> SCORING = (symbol, state) -> symbol == OOV ? OOV_MISMATCH : symbol.equals(state) ? P(1-
+    static F2<Token, Context, P> SCORING = (symbol, state) -> symbol == OOV ? OOV_MISMATCH : symbol.equals(state) ? P
+            (1 -
             .1) :
             ZERO;
 
-      FSet<Score> best_transition(Token state, FSet<Score> best_states, CPX A)
-      {
-          return best_states.apply(previous -> previous.x(A.p(state, previous.state)));
-      }
+    static CPX DEFAULT_EMISSIONS = new CPX()
+    {
+        public P p(Token token, Context context)
+        {
+            return SCORING.of(token, context);
+        }
+    };
 
-    Path_Memory best(FList <Token> datum, Path_Memory memory, CPX A, CPX B)
+
+    FSet<Score> best_transition(Token state, FSet<Score> best_states, CPX A)
+    {
+        return best_states.apply(previous -> previous.x(A.p(state, previous.state)));
+    }
+
+    Path_Memory best(FList<Token> datum, Path_Memory memory, CPX A, CPX B)
     {
         if (datum.isEmpty())
             return memory;
 
-        return best(datum.rest(), next_best_states(datum.first() , memory, A, B), A, B);
+        return best(datum.rest(), next_best_states(datum.first(), memory, A, B), A, B);
     }
 
-    Path_Memory initial_best(Seqence datum,CPX A, CPX B)
+    Path_Memory initial_best(Seqence datum, CPX A, CPX B)
     {
-        FSet<Token> states = B.tokens();
+        FSet<Token> states = A.tokens();
         Token first_symbol = datum.at(1);
 
-        FSet<Score> initial_best_states = states.apply(state -> new Score(state, A.p(state,START).x(B.p(first_symbol,
+        FSet<Score> initial_best_states = states.apply(state -> new Score(state, A.p(state, START).x(B.p(first_symbol,
                 state))));
 
         return new Path_Memory(asFList(initial_best_states), newOrderedFMap(), datum.size());
@@ -57,12 +68,12 @@ public class Viterbi
     {
         FSet<Score> previous = memory.best_states().last();
 
-        FSet <Score> current = previous.apply(score ->
+        FSet<Score> current = previous.apply(score ->
                 {
                     Token state = score.state;
-                    Score best = max(best_transition(state, previous, A)).x(B.p(symbol,state)) ;
-                    memory.best_transitions().put(oo(memory.t() , state), best.state);
-                    return new Score(state,best.value);
+                    Score best = max(best_transition(state, previous, A)).x(B.p(symbol, state));
+                    memory.best_transitions().put(oo(memory.t(), state), best.state);
+                    return new Score(state, best.value);
                 });
 
         memory.best_states().add(current);
@@ -72,13 +83,29 @@ public class Viterbi
 
     Path_Memory final_best(Seqence datum, CPX A, CPX B)
     {
-        return best(datum.symbols().rest().rest(), initial_best(datum,A, B), A, B);
+        return best(datum.symbols().rest().rest(), initial_best(datum, A, B), A, B);
     }
-
 
     public Seqence complete(Seqence datum, CPX A, CPX B)
     {
         return backtrack_from(final_best(datum, A, B));
+    }
+
+    public Seqence complete(Seqence datum, MoMC model)
+    {
+        F1<String, oo<Seqence, P>> completion_per_tag = tag ->
+                {
+                    final Path_Memory memory = final_best(datum, model.transitions_for(tag),DEFAULT_EMISSIONS);
+
+                    return oo(backtrack_from(memory),  marginal(memory));
+                };
+
+        return model.tags().apply(completion_per_tag).max_as(completion -> completion.$2).$1;
+    }
+
+    P marginal(Path_Memory memory)
+    {
+        return memory.best_states().last().find(score -> score.state == END).get().value;
     }
 
     Iterable<Token> step_through(FMap<oo<Integer, Token>, Token> best_transitions, FList<Token> tokens, int t)
@@ -96,10 +123,10 @@ public class Viterbi
 
     Seqence backtrack_from(Path_Memory memory)
     {
-        return Seqence.from(step_through(memory.best_transitions(), asFList(END), memory.T()-1  ));
+        return Seqence.from(step_through(memory.best_transitions(), asFList(END), memory.T() - 1));
     }
 
-    static class Score extends oo<Token, P>  implements Comparable<Score>
+    static class Score extends oo<Token, P> implements Comparable<Score>
     {
         Token state = $1;
         P value = $2;
@@ -137,10 +164,9 @@ public class Viterbi
             return $2;
         }
 
-
         int t()
         {
-            return best_states().size()+1 ;
+            return best_states().size() + 1;
         }
 
         int T()

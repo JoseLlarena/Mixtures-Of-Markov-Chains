@@ -1,8 +1,6 @@
 package com.fluent.pgm.new_api;
 
 import com.fluent.collections.FMap;
-import com.fluent.collections.FSet;
-import com.fluent.math.*;
 import com.fluent.specs.unit.AbstractSpec;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,13 +8,12 @@ import org.mockito.Spy;
 
 import static com.fluent.collections.Lists.EMPTY_FLIST;
 import static com.fluent.collections.Maps.newFMap;
-import static com.fluent.collections.Sets.newOrderedFSet;
 import static com.fluent.core.oo.*;
 import static com.fluent.pgm.new_api.Common.C1;
 import static com.fluent.pgm.new_api.Common.example_model_1;
 import static com.fluent.pgm.new_api.Token.END;
 import static com.fluent.pgm.new_api.Token.OOV;
-import static com.fluent.pgm.new_api.Viterbi.Path_Memory;
+import static com.fluent.pgm.new_api.Viterbi.*;
 import static com.fluent.pgm.new_api.Viterbi.Viterbi;
 
 public class Viterbi_Spec extends AbstractSpec
@@ -49,19 +46,6 @@ public class Viterbi_Spec extends AbstractSpec
     @Test
     public void finds_best_completion() throws Exception
     {
-        CPX emissions = new CPX()
-        {
-            public P p(Token token, Context context)
-            {
-                return Viterbi.SCORING.of(token, context);
-            }
-
-            public FSet<Token> tokens()
-            {
-                return newOrderedFSet(a, b, END);
-            }
-        };
-
-        So(api.complete(sequence, transitions, emissions)).shouldBe(Seqence.from(b, a, b));
+        So(api.complete(sequence, transitions, DEFAULT_EMISSIONS)).shouldBe(Seqence.from(b, a, b));
     }
 }

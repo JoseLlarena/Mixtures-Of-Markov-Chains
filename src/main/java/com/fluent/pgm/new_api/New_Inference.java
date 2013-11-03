@@ -59,17 +59,12 @@ public class New_Inference extends Viterbi
 
     public FList<Seqence> most_likely(int n, FList<Seqence> data, MoMC model)
     {  //FIXME IMPROVE nlog + n -> n
-        return data.sorted(datum -> -marginal(datum, model).asLog() / datum.size()).first(n);
+        return data.sorted(datum -> - marginal(datum, model).asLog() / datum.size()).first(n);
     }
 
     public FList<Seqence> least_likely(int n, FList<Seqence> data, MoMC model)
     {    //FIXME IMPROVE nlog + n -> n
         return data.sorted(datum -> marginal(datum, model).asLog() / datum.size()).first(n);
-    }
-
-    public Seqence complete(Seqence datum, MoMC model)
-    {
-        return null;//best_path_in(path_scores_from(datum, model));
     }
 
 }

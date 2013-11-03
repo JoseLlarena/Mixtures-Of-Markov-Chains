@@ -1,8 +1,11 @@
 package com.fluent.pgm.new_api;
 
+import com.fluent.collections.FList;
 import com.fluent.math.*;
 import com.fluent.specs.unit.AbstractSpec;
 import com.fluent.util.ReadLines;
+import com.fluent.util.WriteLines;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -20,12 +23,19 @@ public class IO_Spec extends AbstractSpec
     public static final String DATA_FILE = "C:/Users/Jose/project-workspace/Sequensir/src/test/resources/data.txt";
     MoMC model;
     Path file = Paths.get(System.getProperty("user.dir"), "momc.json");
-
+    String data_directory = "C:/Users/Jose/project-workspace/Sequensir/src/test/resources/tagged";
+    FList<Seqence> data_1, data_2;
 
     @Before
     public void CONTEXT()
     {
         model = Common.example_model_1();
+        data_1 = asFList(Seqence.from_words("Jazz for a Rainy Afternoon:  {link}"),
+                Seqence.from_words("RT: @mention: I love rainy days."));
+        data_2 = asFList(Seqence.from_words("Insomma parleremo delle scelte di vita della gente."),
+                Seqence.from_words("Ma la Lega si astiene."));
+
+        Paths.get(data_directory).toFile().mkdir();
     }
 
     @Test
@@ -37,14 +47,23 @@ public class IO_Spec extends AbstractSpec
     @Test
     public void reads_char_data_from_file() throws Exception
     {
-        So(IO.read_char_data_from(DATA_FILE)).shouldBe(asFList(Seqence.from_chars("aa"),Seqence.from_chars("bb")));
+        So(IO.char_data_from(DATA_FILE)).shouldBe(asFList(Seqence.from_chars("aa"), Seqence.from_chars("bb")));
     }
 
+    @Test
+    public void reads_tagged_data_from_directory() throws Exception
+    {
+        WriteLines.INSTANCE.to(Paths.get(data_directory, "english.txt"), data_1);
+        WriteLines.INSTANCE.to(Paths.get(data_directory, "italian.txt"), data_2);
+
+        So(IO.tagged_word_data_from(data_directory)).shouldBe(
+                data_1.cross(asFList("english")).plus(data_2.cross(asFList("italian"))));
+    }
 
     @Test
     public void writes_model_to_json_file() throws Exception
     {
-        IO.write_json(model, file);
+        IO.to_json(model, file);
 
         THEN(ReadLines.INSTANCE.from(file).toString("%s")).shouldBe("{\"prior\":[{\"A\":-0" +
                 ".5228787452803376201160290293046273291110992431640625}," +
@@ -68,6 +87,14 @@ public class IO_Spec extends AbstractSpec
     @Test
     public void reads_model_from_json_file() throws Exception
     {
-        So(IO.write_json(model, file).read_from_json(file) ).shouldBe(model );
+        So(IO.to_json(model, file).model_from(file)).shouldBe(model);
+    }
+
+    @After
+    public void CLEAN() throws Exception
+    {
+        Paths.get(data_directory, "english.txt").toFile().delete();
+        Paths.get(data_directory, "italian.txt").toFile().delete();
+        Paths.get(data_directory).toFile().delete();
     }
 }
