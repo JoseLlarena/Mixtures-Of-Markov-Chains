@@ -21,6 +21,7 @@ import static com.fluent.core.ooo.ooo;
 import static com.fluent.math.P.*;
 import static com.fluent.pgm.Sequence.START;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
+import static com.fluent.pgm.new_api.Token.OOV;
 import static com.google.common.collect.Iterators.transform;
 
 public class CPD_Builder
@@ -156,7 +157,12 @@ public class CPD_Builder
 
         public P p(Token token, Context context)
         {
-            return map.get(Ngram.from(context, token), ZERO);
+            P p = map.get(Ngram.from(context, token));
+
+            return p != null ? p :
+                    (p = map.get(Ngram.from(OOV, token))) != null ? p :
+                            (p = map.get(Ngram.from(context, OOV))) != null ? p :
+                                    map.get(Ngram.from(OOV, OOV), ZERO);
         }
 
         public FSet<Token> tokens()

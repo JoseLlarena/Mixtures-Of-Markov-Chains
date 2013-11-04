@@ -3,6 +3,7 @@ package com.fluent.pgm.new_api;
 import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
 import com.fluent.core.F2;
+import com.fluent.core.OP1;
 import com.fluent.core.oo;
 import com.fluent.core.ooo;
 import com.fluent.math.*;
@@ -17,13 +18,14 @@ import static com.fluent.core.oo.*;
 import static com.fluent.math.P.*;
 import static com.fluent.pgm.new_api.CPD_Builder.CPX_from;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
+import static com.fluent.pgm.new_api.Token.OOV;
 import static java.lang.System.out;
 
 public class New_Estimation extends New_Inference
 {
     public static final New_Estimation Estimation = new New_Estimation();
 
-    static MoMC maximisation(EM_Counts counts, int N)
+    MoMC maximisation(EM_Counts counts, int N)
     {
         FMap<String, CPX> new_conditionals = counts.for_ngrams().apply_to_values(to_conditionals(counts
                 .for_tag_context()));
@@ -33,13 +35,13 @@ public class New_Estimation extends New_Inference
         return new MoMC(new_priors, new_conditionals);
     }
 
-    static F2<String, EM_Counter<Ngram>, CPX> to_conditionals(EM_Counter<oo<String, Context>> ngram_counts)
+    F2<String, EM_Counter<Ngram>, CPX> to_conditionals(EM_Counter<oo<String, Context>> ngram_counts)
     {
         return (tag, counts) -> CPX_from(counts.apply_to_values(
                 (ngram, count) -> P(count.sum() / ngram_counts.count_of(oo(tag, ngram.context())))));
     }
 
-    static F2<String, DecimalCounter<Ngram>, CPX> to_conditionals(DecimalCounter<oo<String, Context>> ngram_counts)
+    F2<String, DecimalCounter<Ngram>, CPX> to_conditionals(DecimalCounter<oo<String, Context>> ngram_counts)
     {
         return (tag, counts) -> CPX_from(counts.apply_to_values(
                 (ngram, count) -> P(count / ngram_counts.get(oo(tag, ngram.context())))));
@@ -53,13 +55,7 @@ public class New_Estimation extends New_Inference
 
         try
         {
-            executor.invokeAll(data.apply(split -> new Callable<EM_Counts>()
-            {
-                public EM_Counts call() throws Exception
-                {
-                    return expectation(model, split, counts);
-                }
-            }));
+            executor.invokeAll(data.apply(split -> (Callable<EM_Counts>) () -> expectation(model, split, counts)));
         }
         catch (Exception cause)
         {
@@ -82,7 +78,7 @@ public class New_Estimation extends New_Inference
                                         {
                                             counts.for_tag_context().plus(oo(tag, ngram.context()), weight);
                                             counts.for_ngrams().computeIfAbsent(tag,
-                                                   key-> new EM_Counter<Ngram>()).plus(ngram, weight);
+                                                    key -> new EM_Counter<Ngram>()).plus(ngram, weight);
                                         });
                             });
                 }
@@ -93,32 +89,63 @@ public class New_Estimation extends New_Inference
 
     public MoMC estimate(FList<oo<Seqence, String>> data)
     {
-        DecimalCounter<String> priors = new DecimalCounter<>();
-        DecimalCounter<oo<String, Context>> contexts = new DecimalCounter<>();
-        FMap<String, DecimalCounter<Ngram>> ngrams = newFMap();
+        F2<DecimalCounter<Ngram>, Double, DecimalCounter<Ngram>> smoothing = this::add_delta_smoothing;
+
+        return smoothed_estimate(data, smoothing.with_arg_2(.00001 / data.size())::of);
+    }
+
+    DecimalCounter<oo<String, Context>> contexts_per_tag(FMap<String, DecimalCounter<Ngram>> ngrams_per_tag)
+    {
+        return ngrams_per_tag.aggregate(new DecimalCounter<>(),
+
+                (contexts_per_tag, tag, ngram_counts) -> ngram_counts.aggregate(contexts_per_tag,
+
+                        (ongoing_counts, ngram, count) -> ongoing_counts.plus(oo(tag, ngram.context()), count)));
+    }
+
+    DecimalCounter<Ngram> add_delta_smoothing(DecimalCounter<Ngram> ngrams, double delta)
+    {
+        return ngrams.aggregate(new DecimalCounter<Ngram>(), (new_ngrams, ngram, count) ->
+                {
+                    new_ngrams.put(Ngram.from(OOV, ngram.token()), delta);
+                    new_ngrams.put(Ngram.from(ngram.context(), OOV), delta);
+                    return new_ngrams.plus(ngram, count + delta);
+                }).plus(Ngram.from(OOV, OOV), delta);
+    }
+
+    public MoMC smoothed_estimate(FList<oo<Seqence, String>> data, Smoothing smoothing)
+    {
+        DecimalCounter<String> tags = new DecimalCounter<>();
+        FMap<String, DecimalCounter<Ngram>> ngrams_per_tag = newFMap();
 
         data.each(tagged_datum ->
                 {
                     Seqence datum = tagged_datum.$1;
                     String tag = tagged_datum.$2;
 
-                    priors.plus(tag, 1.);
+                    tags.plus(tag, 1.);
 
                     datum.ngrams().each(ngram ->
                             {
-                                ngrams.computeIfAbsent(tag, key -> new DecimalCounter<Ngram>()).plus(ngram, 1.);
-                                contexts.plus(oo(tag, ngram.context()), 1.);
+                                ngrams_per_tag.computeIfAbsent(tag, key -> new DecimalCounter<Ngram>()).plus(ngram, 1.);
                             });
                 }
         );
 
-        FMap<String, CPX> new_conditionals = ngrams.apply_to_values(to_conditionals(contexts));
+        FMap<String, DecimalCounter<Ngram>> smoothed = ngrams_per_tag.apply_to_values(
+                (tag, ngrams) -> smoothing.of(ngrams));
 
-        double N = data.size();
+        FMap<String, CPX> new_conditionals = smoothed.apply_to_values(to_conditionals(contexts_per_tag(smoothed)));
 
-        MPX new_priors = MPX.from(priors.applyToValues(count -> P(count / N)));
+        MPX new_priors = MPX.from(tags.applyToValues(count -> P(count / data.size())));
 
         return new MoMC(new_priors, new_conditionals);
+    }
+
+
+    public interface Smoothing extends OP1<DecimalCounter<Ngram>>
+    {
+
     }
 
     static class EM_Counts extends ooo<EM_Counter<String>, FMap<String, EM_Counter<Ngram>>,

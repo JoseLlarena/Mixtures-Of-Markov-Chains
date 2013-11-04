@@ -1,5 +1,6 @@
 package com.fluent.pgm.new_api.integration;
 
+import com.fluent.pgm.new_api.MoMC;
 import com.fluent.specs.unit.AbstractSpec;
 import org.junit.After;
 import org.junit.Before;
@@ -15,7 +16,7 @@ public class Easy_Integration_Spec extends AbstractSpec
 {
     String model_file = "momc-completion.json";
     String data_directory = "../Sequensir/src/test/resources/tagged";
-    String untagged_sequence = "Any English text";
+    String untagged_sequence = "Any English sentence should do";
     String output_file = "momc-tagged.json";
 
     @Before
@@ -27,13 +28,13 @@ public class Easy_Integration_Spec extends AbstractSpec
     @Test
     public void completes_datum_with_missing_symbols() throws Exception
     {
-         So(Easy.complete_characters("aa¬b", model_file)).shouldBe("aaab");
+        So(Easy.complete_characters("aa¬b", model_file)).shouldBe("aaab");
     }
 
     @Test
-    public void trains_conditional_markov_chain() throws Exception
+    public void estimates_from_tagged_data() throws Exception
     {
-        Easy.mixture_from_tagged_data(data_directory, output_file);
+        MoMC m = Easy.mixture_from_tagged_data(data_directory, output_file);
 
         So(Easy.tag(untagged_sequence, output_file)).shouldBe("english");
     }
@@ -44,13 +45,4 @@ public class Easy_Integration_Spec extends AbstractSpec
         Paths.get(model_file).toFile().delete();
     }
 
-    public interface My_Predicate
-    {
-        public boolean of(Integer integer);
-
-        public default String someting(String s)
-        {
-            return "";
-        }
-    }
 }
