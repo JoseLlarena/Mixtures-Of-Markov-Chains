@@ -52,7 +52,7 @@ public class New_Estimation_Spec extends AbstractSpec
         FList<Seqence> data = ReadLines.INSTANCE.from(
                 Paths.get("C:/Users/Jose/project-workspace/Sequensir/src/main/resources/langs.txt"),
                 line -> Seqence.from(newFList(process(line), Token::from)),
-                line -> r.nextDouble() > .99);
+                line -> r.nextDouble() > 0.);
         data .apply((datum) -> New_Classification.classify(datum,
                 model) + " -> " + datum).forEach(out::println);
 
@@ -88,7 +88,7 @@ public class New_Estimation_Spec extends AbstractSpec
                                 return "6";
                             else if (chunk.matches("\\s+"))
                                 return " ";
-                            else if (chunk.matches("[^a-zA-Z‡Ë']"))
+                            else if (chunk.matches("[^a-zA-Z√†√®']"))
                                 return "$";
                             else
                                 return chunk;

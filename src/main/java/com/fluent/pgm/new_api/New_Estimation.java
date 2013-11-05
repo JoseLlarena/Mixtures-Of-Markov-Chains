@@ -24,6 +24,7 @@ import static java.lang.System.out;
 public class New_Estimation extends New_Inference
 {
     public static final New_Estimation Estimation = new New_Estimation();
+    static final double SMOOTHING = .00001;
 
     MoMC maximisation(EM_Counts counts, int N)
     {
@@ -65,6 +66,12 @@ public class New_Estimation extends New_Inference
         return maximisation(counts, data.aggregate(0, (N, split) -> N + split.size()));
     }
 
+
+    public MoMC smooth(MoMC model,  FList<Seqence>  data )
+    {
+        return model;
+    }
+
     EM_Counts expectation(MoMC model, FList<Seqence> data, EM_Counts counts)
     {
         data.each(datum ->
@@ -91,7 +98,7 @@ public class New_Estimation extends New_Inference
     {
         F2<DecimalCounter<Ngram>, Double, DecimalCounter<Ngram>> smoothing = this::add_delta_smoothing;
 
-        return smoothed_estimate(data, smoothing.with_arg_2(.00001 / data.size())::of);
+        return smoothed_estimate(data, smoothing.with_arg_2(SMOOTHING / data.size())::of);
     }
 
     DecimalCounter<oo<String, Context>> contexts_per_tag(FMap<String, DecimalCounter<Ngram>> ngrams_per_tag)
@@ -103,6 +110,7 @@ public class New_Estimation extends New_Inference
                         (ongoing_counts, ngram, count) -> ongoing_counts.plus(oo(tag, ngram.context()), count)));
     }
 
+
     DecimalCounter<Ngram> add_delta_smoothing(DecimalCounter<Ngram> ngrams, double delta)
     {
         return ngrams.aggregate(new DecimalCounter<Ngram>(), (new_ngrams, ngram, count) ->
@@ -110,6 +118,7 @@ public class New_Estimation extends New_Inference
                     new_ngrams.put(Ngram.from(OOV, ngram.token()), delta);
                     new_ngrams.put(Ngram.from(ngram.context(), OOV), delta);
                     return new_ngrams.plus(ngram, count + delta);
+
                 }).plus(Ngram.from(OOV, OOV), delta);
     }
 

@@ -2,8 +2,7 @@ package com.fluent.pgm.new_api;
 
 import com.fluent.collections.FList;
 import com.fluent.core.F1;
-import com.fluent.core.F2;
-import com.fluent.core.F3;
+import com.fluent.core.OP1;
 import com.fluent.math.*;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.joda.time.DateTime;
@@ -16,6 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import static com.fluent.collections.Lists.parse;
+import static com.fluent.core.Functions.f2;
+import static com.fluent.core.Functions.f3;
 import static com.fluent.pgm.new_api.IO.IO;
 import static com.fluent.pgm.new_api.New_Estimation.Estimation;
 import static com.fluent.pgm.new_api.New_Inference.New_Inference;
@@ -64,23 +65,23 @@ public class Easy
     {
         FList<Seqence> data = io.data_from(data_file, pipeline);
 
-        F3<MoMC, FList<FList<Seqence>>, ExecutorService, MoMC> em = estimation::reestimate;
-
-        F2<MoMC, ExecutorService, MoMC> em_with_data = em.with_arg_2(data.split(thread_count())).append(out(data));
-
         ExecutorService executor = newFixedThreadPool(thread_count());
 
-        MoMC model = optimisation.optimise(init.initialise_with(data), em_with_data.with_arg_2(executor)::of);
+        F1<MoMC, MoMC> em = f3(estimation::reestimate, MoMC.class, FList.class, ExecutorService.class)
+                .with_args_2_3(data.split(thread_count()), executor).append(out(data));
+
+        MoMC model = (MoMC) f2(optimisation::optimise, MoMC.class, OP1.class)
+                .and_then(f2(estimation::smooth, MoMC.class, FList.class).with_arg_2(data))
+                .apply(init.initialise_with(data), (OP1<MoMC>) em::apply);
 
         executor.shutdown();
 
         return model;
     }
 
-
     public String complete_characters(String datum, String model_file) throws IOException
     {
-        FList<Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("¬") ? OOV : Token.from(chunk))
+        FList<Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("Â¬") ? OOV : Token.from(chunk))
                 .minus(Token.from(""));
 
         return inference.complete(Seqence.from(tokens), io.model_from(Paths.get(model_file))).toString().replaceAll
@@ -101,7 +102,7 @@ public class Easy
         final Seqence sequence = Seqence.from_chars(untagged);
         final MoMC model = io.model_from(Paths.get(model_file));
 
-        return  inference.joint(sequence, model).max_as(( tag,posterior) -> posterior).$1;
+        return inference.joint(sequence, model).max_as((tag, posterior) -> posterior).$1;
     }
 
     Consumer<? super MoMC> out(FList<Seqence> data)
@@ -122,5 +123,4 @@ public class Easy
 
                 };
     }
-
 }

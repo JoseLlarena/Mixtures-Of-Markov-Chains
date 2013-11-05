@@ -28,7 +28,7 @@ public class Easy_Integration_Spec extends AbstractSpec
     @Test
     public void completes_datum_with_missing_symbols() throws Exception
     {
-        So(Easy.complete_characters("aa¬b", model_file)).shouldBe("aaab");
+        So(Easy.complete_characters("aaÂ¬b", model_file)).shouldBe("aaab");
     }
 
     @Test
@@ -44,5 +44,4 @@ public class Easy_Integration_Spec extends AbstractSpec
     {
         Paths.get(model_file).toFile().delete();
     }
-
 }
