@@ -1,18 +1,16 @@
 package com.fluent.pgm.new_api;
 
 import com.fluent.collections.FList;
+import com.fluent.core.Condition;
 import com.fluent.core.F1;
 import com.fluent.core.OP1;
-import com.fluent.math.*;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 import static com.fluent.collections.Lists.parse;
 import static com.fluent.core.Functions.f2;
@@ -23,24 +21,22 @@ import static com.fluent.pgm.new_api.New_Inference.New_Inference;
 import static com.fluent.pgm.new_api.New_Initialisation.Initialisation;
 import static com.fluent.pgm.new_api.New_Optimisation.Optimisation;
 import static com.fluent.pgm.new_api.Token.OOV;
+import static java.lang.Math.log10;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.out;
 import static java.util.concurrent.Executors.newFixedThreadPool;
+import static org.joda.time.format.DateTimeFormat.fullDateTime;
 
 public class Easy
 {
     public static final Easy Easy = new Easy();
+   // private static  final
     //
     New_Initialisation init;
     New_Estimation estimation;
     New_Optimisation optimisation;
     IO io;
     New_Inference inference;
-
-    static int thread_count()
-    {
-        return getRuntime().availableProcessors();
-    }
 
     Easy(IO io, New_Inference infer, New_Initialisation init, New_Estimation estimation, New_Optimisation optimisation)
     {
@@ -68,11 +64,11 @@ public class Easy
         ExecutorService executor = newFixedThreadPool(thread_count());
 
         F1<MoMC, MoMC> em = f3(estimation::reestimate, MoMC.class, FList.class, ExecutorService.class)
-                .with_args_2_3(data.split(thread_count()), executor).append(out(data));
+                .with_args_2_3(data.split(thread_count()), executor);
 
-        MoMC model = (MoMC) f2(optimisation::optimise, MoMC.class, OP1.class)
+        MoMC model = (MoMC) f3(optimisation::optimise, MoMC.class, OP1.class, Condition.class)
                 .and_then(f2(estimation::smooth, MoMC.class, FList.class).with_arg_2(data))
-                .apply(init.initialise_with(data), (OP1<MoMC>) em::apply);
+                .of(init.initialise_with(data), (OP1<MoMC>) em::apply, stopping_criterion(data, 99, 5));
 
         executor.shutdown();
 
@@ -105,22 +101,34 @@ public class Easy
         return inference.joint(sequence, model).max_as((tag, posterior) -> posterior).$1;
     }
 
-    Consumer<? super MoMC> out(FList<Seqence> data)
+    static int thread_count()
     {
-        AtomicDouble previous = new AtomicDouble(Double.NEGATIVE_INFINITY);
-        AtomicInteger iterator = new AtomicInteger();
+        return getRuntime().availableProcessors();
+    }
+
+    Condition<MoMC> stopping_criterion(FList<Seqence> data,
+                                       double percent_convergence,
+                                       int min_improvement_iterations)
+    {
+        AtomicDouble old_loglikelihood = new AtomicDouble(Double.NEGATIVE_INFINITY);
+        AtomicInteger iteration = new AtomicInteger();
+        AtomicInteger improvement_iterations = new AtomicInteger();
+        double log_percent_convergence = log10(percent_convergence);
+
         return model ->
                 {
-                    final double likelihood = inference.likelihood(model, data).asLog();
-                    out.printf("%s [%d] %f %s %s %n",
-                            DateTimeFormat.fullDateTime().print(DateTime.now()),
-                            iterator.getAndIncrement(),
-                            likelihood,
-                            2 + previous.get() - likelihood > .1,
-                            P.terms_to_sum.stats());
+                    double loglikelihood = inference.likelihood(model, data).asLog();
+                    out.printf("%s [%d] %f %n",
+                            fullDateTime().print(DateTime.now()),
+                            iteration.getAndIncrement(),
+                            loglikelihood);
 
-                    previous.set(likelihood);
+                    boolean improved = (2 + old_loglikelihood.getAndSet(loglikelihood) - loglikelihood) >
+                            log_percent_convergence;
 
+                    improvement_iterations.getAndAdd(improved ? 1 : -improvement_iterations.get());
+
+                    return improvement_iterations.get() >= min_improvement_iterations;
                 };
     }
 }
