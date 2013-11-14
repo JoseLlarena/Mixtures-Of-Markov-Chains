@@ -26,19 +26,28 @@ public class Viterbi
 {
     public static final Viterbi Viterbi = new Viterbi();
     static final P OOV_MISMATCH = P(.1);
-    static F2<Token, Context, P> SCORING = (symbol, state) -> symbol == OOV ? OOV_MISMATCH : symbol.equals(state) ? P
-            (1 -
-            .1) :
-            ZERO;
+    static F2<Token, Context, P> SCORING = (symbol, state) ->
+            symbol == OOV ? OOV_MISMATCH :
+                    symbol.equals(state) ? P(1 - .1) :
+                            ZERO;
+    static CPX DEFAULT_EMISSIONS = (token, context) -> SCORING.of(token, context);
 
-    static CPX DEFAULT_EMISSIONS = new CPX()
+    public Seqence complete(Seqence datum, CPX A, CPX B)
     {
-        public P p(Token token, Context context)
-        {
-            return SCORING.of(token, context);
-        }
-    };
+        return backtrack_from(final_best(datum, A, B));
+    }
 
+    public Seqence complete(Seqence datum, MoMC model)
+    {
+        F1<String, oo<Seqence, P>> completion_per_tag = tag ->
+                {
+                    final Path_Memory memory = final_best(datum, model.transitions_for(tag), DEFAULT_EMISSIONS);
+
+                    return oo(backtrack_from(memory), marginal(memory));
+                };
+
+        return model.tags().apply(completion_per_tag).max_as(completion -> completion.$2).$1;
+    }
 
     FSet<Score> best_transition(Token state, FSet<Score> best_states, CPX A)
     {
@@ -86,23 +95,6 @@ public class Viterbi
         return best(datum.symbols().rest().rest(), initial_best(datum, A, B), A, B);
     }
 
-    public Seqence complete(Seqence datum, CPX A, CPX B)
-    {
-        return backtrack_from(final_best(datum, A, B));
-    }
-
-    public Seqence complete(Seqence datum, MoMC model)
-    {
-        F1<String, oo<Seqence, P>> completion_per_tag = tag ->
-                {
-                    final Path_Memory memory = final_best(datum, model.transitions_for(tag),DEFAULT_EMISSIONS);
-
-                    return oo(backtrack_from(memory),  marginal(memory));
-                };
-
-        return model.tags().apply(completion_per_tag).max_as(completion -> completion.$2).$1;
-    }
-
     P marginal(Path_Memory memory)
     {
         return memory.best_states().last().find(score -> score.state == END).get().value;
@@ -136,14 +128,14 @@ public class Viterbi
             super($1, $2);
         }
 
-        Score x(P other_value)
-        {
-            return new Score(state, value.x(other_value));
-        }
-
         public int compareTo(Score o)
         {
             return this.value.compareTo(o.value);
+        }
+
+        Score x(P other_value)
+        {
+            return new Score(state, value.x(other_value));
         }
     }
 

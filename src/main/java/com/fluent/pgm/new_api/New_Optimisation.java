@@ -8,7 +8,6 @@ public interface New_Optimisation
 {
     public static final New_Optimisation Optimisation = new New_Optimisation() {};
 
-
     public default MoMC optimise(MoMC initial, OP1<MoMC> em_iteration)
     {
         return optimise(initial, em_iteration, Clock.tickTimes(25));
@@ -26,11 +25,11 @@ public interface New_Optimisation
         return model;
     }
 
-    public default MoMC optimise(MoMC initial, OP1<MoMC> em_iteration, Condition<MoMC> criterion_is_true)
+    public default MoMC optimise(MoMC initial, OP1<MoMC> em_iteration, Condition<MoMC> stopping)
     {
         MoMC model = initial;
 
-        while (!criterion_is_true.of(model))
+        while (!stopping.of(model))
         {
             model = em_iteration.of(model);
         }

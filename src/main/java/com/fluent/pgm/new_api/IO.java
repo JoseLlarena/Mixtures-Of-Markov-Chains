@@ -21,6 +21,8 @@ import static com.fluent.core.oo.*;
 import static com.fluent.pgm.new_api.MPX_Builder.MPX;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
 import static com.fluent.util.ReadLines.Read_Lines;
+import static java.lang.Double.NEGATIVE_INFINITY;
+import static java.lang.Double.isInfinite;
 import static java.nio.file.Files.list;
 import static java.util.stream.Collectors.toCollection;
 
@@ -52,7 +54,7 @@ public class IO
 
     public FList<oo<Seqence, String>> tagged_char_data_from(String data_directory) throws Exception
     {
-        FList<Path> files = list(Paths.get(data_directory)).collect(toCollection(() -> newFList( )));
+        FList<Path> files = list(Paths.get(data_directory)).collect(toCollection(() -> newFList()));
 
         final F1<Path, F1<String, oo<Seqence, String>>> path_to_line_to_tagged_sequence =
                 path -> line -> oo(Seqence.from_chars(line), path.toFile().getName().split("\\.txt")[0]);
@@ -62,7 +64,7 @@ public class IO
 
     public FList<oo<Seqence, String>> tagged_word_data_from(String data_directory) throws Exception
     {
-        FList<Path> files = list(Paths.get(data_directory)).collect(toCollection(() -> newFList( )));
+        FList<Path> files = list(Paths.get(data_directory)).collect(toCollection(() -> newFList()));
 
         final F1<Path, F1<String, oo<Seqence, String>>> path_to_line_to_tagged_sequence =
                 path -> line -> oo(Seqence.from_words(line), path.toFile().getName().split("\\.txt")[0]);
@@ -72,6 +74,17 @@ public class IO
 
     static class MoMC_Serialiser extends JsonSerializer<MoMC>
     {
+        public void serialize(MoMC model, JsonGenerator generator, SerializerProvider provider) throws IOException
+        {
+            generator.writeStartObject();
+
+            write_prior(model.prior(), generator);
+
+            write_conditionals(model.transitions_per_tag(), generator);
+
+            generator.writeEndObject();
+        }
+
         static void write_conditionals(FMap<String, CPX> transitions, JsonGenerator generator) throws IOException
         {
             generator.writeArrayFieldStart("conditionals");
@@ -104,7 +117,12 @@ public class IO
         static void write_number_object(String name, double value, JsonGenerator generator) throws IOException
         {
             generator.writeStartObject();
-            generator.writeNumberField(name, new BigDecimal(value));
+
+            if (isInfinite(value))
+                generator.writeNumberField(name, NEGATIVE_INFINITY);
+            else
+                generator.writeNumberField(name, new BigDecimal(value));
+
             generator.writeEndObject();
         }
 
@@ -119,21 +137,17 @@ public class IO
 
             generator.writeEndArray();
         }
-
-        public void serialize(MoMC model, JsonGenerator generator, SerializerProvider provider) throws IOException
-        {
-            generator.writeStartObject();
-
-            write_prior(model.prior(), generator);
-
-            write_conditionals(model.transitions_per_tag(), generator);
-
-            generator.writeEndObject();
-        }
     }
 
     static class MoMC_Deserialiser extends JsonDeserializer<MoMC>
     {
+        public MoMC deserialize(JsonParser parser, DeserializationContext context) throws IOException
+        {
+            JsonNode root = parser.getCodec().readTree(parser);
+
+            return new MoMC(prior_from(root), conditionals_from(root));
+        }
+
         static FMap<String, CPX> conditionals_from(JsonNode root)
         {
             JsonNode conditionals_node = root.get("conditionals");
@@ -159,8 +173,9 @@ public class IO
                 String context = entry.fieldNames().next();
                 JsonNode conditional = entry.findValue(context);
                 String item = conditional.fieldNames().next();
-                map.plus(Ngram.from(Token.from(context), Token.from(item)), P.from_log(conditional.findValue
-                        (item).asDouble()));
+                final double log_value = conditional.findValue(item).asDouble();
+
+                map.plus(Ngram.from(Token.from(context), Token.from(item)), P.from_log(log_value));
             }
             return CPD_Builder.CPX_from(map);
         }
@@ -179,13 +194,6 @@ public class IO
             }
 
             return prior_to_be.done();
-        }
-
-        public MoMC deserialize(JsonParser parser, DeserializationContext context) throws IOException
-        {
-            JsonNode root = parser.getCodec().readTree(parser);
-
-            return new MoMC(prior_from(root), conditionals_from(root));
         }
     }
 }

@@ -3,13 +3,9 @@ package com.fluent.pgm.new_api;
 import com.fluent.collections.FConcurrentHashMap;
 import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
-import com.fluent.core.F2;
-import com.fluent.core.OP1;
-import com.fluent.core.oo;
-import com.fluent.core.ooo;
+import com.fluent.collections.FSetMultiMap;
+import com.fluent.core.*;
 import com.fluent.math.*;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -20,7 +16,7 @@ import static com.fluent.math.P.*;
 import static com.fluent.pgm.new_api.CPD_Builder.CPX_from;
 import static com.fluent.pgm.new_api.Seqence.Ngram;
 import static com.fluent.pgm.new_api.Token.OOV;
-import static java.lang.System.out;
+import static java.lang.Double.isNaN;
 
 public class New_Estimation extends New_Inference
 {
@@ -29,7 +25,6 @@ public class New_Estimation extends New_Inference
 
     public MoMC reestimate(MoMC model, FList<FList<Seqence>> data, ExecutorService executor)
     {
-        out.println(DateTimeFormat.fullDateTime().print(DateTime.now()) + " EM STARTS");
         EM_Counts counts = new EM_Counts(new EM_Counter<>(), new FConcurrentHashMap<>(), new EM_Counter<>());
 
         try
@@ -44,11 +39,30 @@ public class New_Estimation extends New_Inference
         return maximisation(counts, data.aggregate(0, (N, split) -> N + split.size()));
     }
 
-    public MoMC smooth(MoMC model, FList<Seqence> data)
+    public MoMC smooth(MoMC model)
     {
         FMap<String, CPX> transitions_per_tag = model.transitions_per_tag();
 
-        return new MoMC(model.prior(), transitions_per_tag);
+        FMap<String, CPX> smoothed_transitions_per_tag = transitions_per_tag.apply_to_values(
+                (tag, cpd) ->
+                        {
+                            FMap<Ngram, P> map = add_OOV(cpd.as_map());
+
+                            FSetMultiMap<Context, oo<Ngram, P>> context_to_entry = map.entries().groupBy
+                                    (ngram_with_p -> ngram_with_p.$1.$1);
+
+                            F2<Ngram, P, oo<Ngram, P>> smoothing = (ngram, p) ->
+                                    oo(
+                                            ngram,
+
+                                            P((p.toDouble() + SMOOTHING) / (1 + SMOOTHING * context_to_entry.get(ngram
+                                                    .$1).size
+                                                    ())));
+
+                            return CPX_from(map.apply(smoothing));
+                        });
+
+        return new MoMC(model.prior(), smoothed_transitions_per_tag);
     }
 
     public MoMC estimate(FList<oo<Seqence, String>> data)
@@ -100,7 +114,14 @@ public class New_Estimation extends New_Inference
     F2<String, EM_Counter<Ngram>, CPX> to_conditionals(EM_Counter<oo<String, Context>> ngram_counts)
     {
         return (tag, counts) -> CPX_from(counts.apply_to_values(
-                (ngram, count) -> P(count.sum() / ngram_counts.count_of(oo(tag, ngram.context())))));
+                (ngram, count) ->
+                        {
+                            double conditional = count.sum() / ngram_counts.count_of(oo(tag, ngram.context()));
+
+                            return isNaN(conditional) ? ZERO : P(count.sum() / ngram_counts.count_of(oo(tag,
+                                    ngram.context())));
+                        }))
+                ;
     }
 
     F2<String, DecimalCounter<Ngram>, CPX> to_conditionals(DecimalCounter<oo<String, Context>> ngram_counts)
@@ -150,6 +171,19 @@ public class New_Estimation extends New_Inference
 
                 }).plus(Ngram.from(OOV, OOV), delta);
     }
+
+    FMap<Ngram,P> add_OOV(FMap<Ngram, P> ngrams)
+    {
+        return ngrams.aggregate(newFMap(Ngram.class,P.class), (new_ngrams, ngram, count) ->
+                {
+                    new_ngrams.put(Ngram.from(OOV, ngram.token()), ZERO);
+                    new_ngrams.put(Ngram.from(ngram.context(), OOV), ZERO);
+                    return new_ngrams.plus(ngram, count);
+
+                }).plus(Ngram.from(OOV, OOV), ZERO);
+    }
+
+
 
 
     public interface Smoothing extends OP1<DecimalCounter<Ngram>>

@@ -14,8 +14,8 @@ public interface Token extends Context
     static HashFunction hash = goodFastHash(64);
     static final long START_ID = id_from2("!^!"), END_ID = id_from2("!$!"), OOV_ID = id_from2("!?!");
     public static final Token
-            START = new Special_Token("!^!",
-            START_ID), END = new Special_Token("!$!", END_ID),
+            START = new Special_Token("!^!", START_ID),
+            END = new Special_Token("!$!", END_ID),
             OOV = new Special_Token("!?!", OOV_ID);
     public static Cache<Long, Token> id_to_token = CacheBuilder.newBuilder().maximumSize(100_000).recordStats().build
             ();

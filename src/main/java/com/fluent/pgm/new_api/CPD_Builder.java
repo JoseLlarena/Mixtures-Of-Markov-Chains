@@ -81,7 +81,7 @@ public class CPD_Builder
     {
         for (final FMap<String, P> conditional : contextTokenProability.asFMap().values())
         {
-            final P mass = conditional.values().collect(ZERO, (sum, item) -> sum.add(item));
+            final P mass = conditional.values().aggregate(ZERO, (sum, item) -> sum.add(item));
 
             reject(mass.lt(P(.999999)), "All probabilities should plus up to 1 but got " + mass + "  in " +
                     conditional);
@@ -168,6 +168,11 @@ public class CPD_Builder
         public FSet<Token> tokens()
         {
             return map.keys().apply(Ngram::token);
+        }
+
+        public FMap<Ngram,P> as_map()
+        {
+            return map;
         }
 
         public MPX mpd_from(Context context)

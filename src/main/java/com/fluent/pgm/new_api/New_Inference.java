@@ -41,7 +41,7 @@ public class New_Inference extends Viterbi
 
     public P conditional(Seqence sequence, CPX transition)
     {
-        F2<P, Ngram, P> product = (conditional, ngram) -> conditional.x(transition.p(ngram.$2, ngram.$1));
+        F2<P, Ngram, P> product = (conditional, ngram) -> conditional.x(transition.p(ngram.token(), ngram.context()));
 
         return sequence.ngrams().aggregate(ONE, product);
     }

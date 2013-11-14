@@ -47,6 +47,7 @@ public class New_Initialisation
         FMap<Ngram, P> transitions = data.flat(datum -> datum.ngrams()).aggregate(newFMap(),
                 (ngram_to_p, ngram) -> ngram_to_p.plus(ngram, P((new_weight.value()))));
 
+
         return CPX_from(transitions);
     }
 
@@ -58,8 +59,9 @@ public class New_Initialisation
     public static class Options
     {
         public static final Options DEFAULT = new Options();
-        int tag = 2;
-        long seed = Common.SEED_1;
+        //
+        int tag = 6;
+        long seed = Common.SEED_1+54;
 
         public int tag_count()
         {

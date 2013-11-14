@@ -34,7 +34,7 @@ public class Easy_Integration_Spec extends AbstractSpec
     @Test
     public void estimates_from_tagged_data() throws Exception
     {
-        MoMC m = Easy.mixture_from_tagged_data(data_directory, output_file);
+        MoMC m = Easy.mixture_from_tagged(data_directory, output_file);
 
         So(Easy.tag(untagged_sequence, output_file)).shouldBe("english");
     }

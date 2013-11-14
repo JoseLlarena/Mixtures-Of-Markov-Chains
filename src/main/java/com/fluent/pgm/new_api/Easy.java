@@ -5,7 +5,7 @@ import com.fluent.core.Condition;
 import com.fluent.core.F1;
 import com.fluent.core.OP1;
 import com.google.common.util.concurrent.AtomicDouble;
-import org.joda.time.DateTime;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -13,8 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.fluent.collections.Lists.parse;
-import static com.fluent.core.Functions.f2;
-import static com.fluent.core.Functions.f3;
+import static com.fluent.core.Functions.*;
 import static com.fluent.pgm.new_api.IO.IO;
 import static com.fluent.pgm.new_api.New_Estimation.Estimation;
 import static com.fluent.pgm.new_api.New_Inference.New_Inference;
@@ -23,14 +22,14 @@ import static com.fluent.pgm.new_api.New_Optimisation.Optimisation;
 import static com.fluent.pgm.new_api.Token.OOV;
 import static java.lang.Math.log10;
 import static java.lang.Runtime.getRuntime;
-import static java.lang.System.out;
+import static java.lang.String.format;
 import static java.util.concurrent.Executors.newFixedThreadPool;
-import static org.joda.time.format.DateTimeFormat.fullDateTime;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class Easy
 {
     public static final Easy Easy = new Easy();
-   // private static  final
+    private static final Logger log = getLogger(Easy.getClass());
     //
     New_Initialisation init;
     New_Estimation estimation;
@@ -54,10 +53,10 @@ public class Easy
 
     public MoMC estimate_from(String data_file) throws Exception
     {
-        return estimate_from(data_file, Seqence::from_chars);
+        return mixture_from(data_file, Seqence::from_chars);
     }
 
-    public MoMC estimate_from(String data_file, F1<String, Seqence> pipeline) throws Exception
+    public MoMC mixture_from(String data_file, F1<String, Seqence> pipeline) throws Exception
     {
         FList<Seqence> data = io.data_from(data_file, pipeline);
 
@@ -67,13 +66,15 @@ public class Easy
                 .with_args_2_3(data.split(thread_count()), executor);
 
         MoMC model = (MoMC) f3(optimisation::optimise, MoMC.class, OP1.class, Condition.class)
-                .and_then(f2(estimation::smooth, MoMC.class, FList.class).with_arg_2(data))
-                .of(init.initialise_with(data), (OP1<MoMC>) em::apply, stopping_criterion(data, 99, 5));
+                .and_then(f1(estimation::smooth))
+                .of(init.initialise_with(data), (OP1<MoMC>) em::apply, stopping_criterion(data, 99.9999, 10));
 
         executor.shutdown();
 
         return model;
     }
+
+
 
     public String complete_characters(String datum, String model_file) throws IOException
     {
@@ -84,7 +85,7 @@ public class Easy
                 ("\\s+", "");
     }
 
-    public MoMC mixture_from_tagged_data(String data_directory, String output_file) throws Exception
+    public MoMC mixture_from_tagged(String data_directory, String output_file) throws Exception
     {
         MoMC model = estimation.estimate(io.tagged_char_data_from(data_directory));
 
@@ -118,10 +119,9 @@ public class Easy
         return model ->
                 {
                     double loglikelihood = inference.likelihood(model, data).asLog();
-                    out.printf("%s [%d] %f %n",
-                            fullDateTime().print(DateTime.now()),
-                            iteration.getAndIncrement(),
-                            loglikelihood);
+
+                    log.info(format("em iteration [%04d] log-likelihood [%15.8f]", iteration.getAndIncrement(),
+                            loglikelihood));
 
                     boolean improved = (2 + old_loglikelihood.getAndSet(loglikelihood) - loglikelihood) >
                             log_percent_convergence;

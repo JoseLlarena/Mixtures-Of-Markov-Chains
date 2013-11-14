@@ -21,6 +21,12 @@ public class Seqence
     long id;
     FList<Ngram> ngrams;
 
+    public Seqence(long id, FList<Ngram> ngrams)
+    {
+        this.id = id;
+        this.ngrams = ngrams;
+    }
+
     @Deprecated
     public static Seqence from(String a)
     {
@@ -68,10 +74,11 @@ public class Seqence
         return new Seqence(hasher.hash().asLong(), ngrams);
     }
 
-    public static  Seqence from(Token... tokens)
+    public static Seqence from(Token... tokens)
     {
         return from(asList(tokens));
     }
+
     public static <TOKENS extends Iterable<Token>> Seqence from(TOKENS tokens)
     {
         FList<Ngram> ngrams = newFList();
@@ -92,11 +99,29 @@ public class Seqence
         return new Seqence(hasher.hash().asLong(), ngrams);
     }
 
-
-    public Seqence(long id, FList<Ngram> ngrams)
+    public static <TOKENS extends Iterable<Token>> Seqence from(TOKENS tokens, int order)
     {
-        this.id = id;
-        this.ngrams = ngrams;
+        FList<Ngram> ngrams = newFList();
+
+        Context prev1 = START;
+        Context prev2 = START;
+        Context bigram = START;
+        Hasher hasher = Common.hash.newHasher();
+
+        for (Token each : tokens)
+        {
+            ngrams.plus(Ngram.from(bigram, each));
+            prev2 = prev1;
+            prev1 = each;
+
+            bigram =  Token.from(prev2+":::"+prev1);
+
+            hasher.putLong(each.id());
+        }
+
+        ngrams.plus(Ngram.from(bigram, Token.END));
+
+        return new Seqence(hasher.hash().asLong(), ngrams);
     }
 
     public String toString()
@@ -112,11 +137,6 @@ public class Seqence
     public int hashCode()
     {
         return (int) id;
-    }
-
-     FList<Token> symbols()
-    {
-        return asFList(START).plus(ngrams.apply(ngram -> ngram.token()));
     }
 
     public long id()
@@ -136,7 +156,33 @@ public class Seqence
 
     public Token at(int i)
     {
-        return i == 0 ? START : ngrams.get(i-1).token();
+        return i == 0 ? START : ngrams.get(i - 1).token();
+    }
+
+    static long hashfrom(long prev1, long prev2, Hasher hasher)
+    {
+        return hasher.putLong(prev1).putLong(prev2).hash().asLong();
+    }
+
+    static Context bigram(long id, String s)
+    {
+        return new Context()
+        {
+            public long id()
+            {
+                return id;
+            }
+
+            public String toString()
+            {
+                return s;
+            }
+        };
+    }
+
+    FList<Token> symbols()
+    {
+        return asFList(START).plus(ngrams.apply(ngram -> ngram.token()));
     }
 
     public static class Ngram extends oo<Context, Token>
@@ -145,6 +191,12 @@ public class Seqence
                 .maximumSize(10_000_000)
                 .build();
         long id;
+
+        Ngram(Context context, Token token, long id)
+        {
+            super(context, token);
+            this.id = id;
+        }
 
         public static Ngram from(Context context, Token token)
         {
@@ -157,12 +209,6 @@ public class Seqence
             {
                 throw new RuntimeException(e);
             }
-        }
-
-        Ngram(Context context, Token token, long id)
-        {
-            super(context, token);
-            this.id = id;
         }
 
         public Context context()
