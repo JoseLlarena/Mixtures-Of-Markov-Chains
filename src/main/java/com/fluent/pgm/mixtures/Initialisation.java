@@ -8,7 +8,7 @@ import com.fluent.math.*;
 
 import java.util.Random;
 
-import static com.fluent.collections.Lists.range;
+import static com.fluent.collections.Ints.range;
 import static com.fluent.collections.Maps.newFMap;
 import static com.fluent.core.Functions.f0;
 import static com.fluent.core.Words.to;
@@ -59,7 +59,7 @@ public class Initialisation
     {
         public static final Options DEFAULT = new Options();
         //
-        int tag = 2;
+        int tag = 6;
         long seed = Common.SEED_1 + 54;
 
         public int tag_count()

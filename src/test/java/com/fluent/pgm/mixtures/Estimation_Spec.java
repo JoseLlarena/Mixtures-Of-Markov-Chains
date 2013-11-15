@@ -1,18 +1,16 @@
 package com.fluent.pgm.mixtures;
 
 import com.fluent.collections.FMap;
-import com.fluent.specs.unit.AbstractSpec;
 import org.junit.Before;
 import org.junit.Test;
 
 import static com.fluent.collections.Maps.newOrderedFMap;
 import static com.fluent.pgm.mixtures.CPD.p;
-import static com.fluent.pgm.mixtures.Common.*;
 import static com.fluent.pgm.mixtures.Estimation.Estimation;
 import static com.fluent.pgm.mixtures.Token.END;
 import static com.fluent.pgm.mixtures.Token.START;
 
-public class Estimation_Spec extends AbstractSpec
+public class Estimation_Spec   extends Base_Spec
 {
     MoMC model = example_model(), the_smoothed_model;
 

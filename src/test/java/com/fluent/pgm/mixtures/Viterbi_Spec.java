@@ -1,7 +1,6 @@
 package com.fluent.pgm.mixtures;
 
 import com.fluent.collections.FMap;
-import com.fluent.specs.unit.AbstractSpec;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Spy;
@@ -9,14 +8,12 @@ import org.mockito.Spy;
 import static com.fluent.collections.Lists.EMPTY_FLIST;
 import static com.fluent.collections.Maps.newFMap;
 import static com.fluent.core.oo.*;
-import static com.fluent.pgm.mixtures.Common.SWITCHING;
-import static com.fluent.pgm.mixtures.Common.example_model;
 import static com.fluent.pgm.mixtures.Token.END;
 import static com.fluent.pgm.mixtures.Token.OOV;
 import static com.fluent.pgm.mixtures.Viterbi.*;
 import static com.fluent.pgm.mixtures.Viterbi.Viterbi;
 
-public class Viterbi_Spec extends AbstractSpec
+public class Viterbi_Spec extends Base_Spec
 {
     Token a = Token.from("a"), b = Token.from("b");
     Sequence state_sequence = Sequence.from_chars("bba"), sequence = Sequence.from(OOV, OOV, OOV);

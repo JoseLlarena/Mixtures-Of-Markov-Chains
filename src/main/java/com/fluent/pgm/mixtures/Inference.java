@@ -25,7 +25,7 @@ public class Inference extends Viterbi
 
         P marginal = marginal_from(joint_pdf);
 
-        return joint_pdf.applyToValues(joint -> joint.div(marginal));
+        return joint_pdf.apply_to_values(joint -> joint.div(marginal));
     }
 
     public FMap<String, P> joint(Ngram ngram, MoMC model)

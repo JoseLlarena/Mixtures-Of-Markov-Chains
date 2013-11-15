@@ -1,17 +1,15 @@
 package com.fluent.pgm.mixtures;
 
-import com.fluent.specs.unit.AbstractSpec;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Random;
 
 import static com.fluent.collections.Lists.asFList;
-import static com.fluent.pgm.mixtures.Common.SWITCHING;
 import static com.fluent.pgm.mixtures.Common.SEED_1;
 import static com.fluent.pgm.mixtures.Generation.Generation;
 
-public class Data_Generation_Spec extends AbstractSpec
+public class Data_Generation_Spec   extends Base_Spec
 {
     int N;
     MoMC model;
@@ -19,7 +17,7 @@ public class Data_Generation_Spec extends AbstractSpec
     @Before
     public void CONTEXT()
     {
-        model = Common.example_model();
+        model = example_model();
     }
 
     @Test//FIXME WE WANT TO TEST SEQUENCES ARE GENERATED WITH CORRECT FREQUENCY

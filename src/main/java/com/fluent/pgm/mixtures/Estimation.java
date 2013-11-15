@@ -17,12 +17,12 @@ import static com.fluent.core.oo.*;
 import static com.fluent.math.P.*;
 import static com.fluent.pgm.mixtures.Sequence.Ngram;
 import static com.fluent.pgm.mixtures.Token.OOV;
-import static java.lang.Double.isNaN;
 
 public class Estimation extends Inference
 {
     public static final Estimation Estimation = new Estimation();
-    static final double SMOOTHING = .00001;
+    static final double SMOOTHING = 1e-10;
+    static final double MIN_WEIGHT = Double.MIN_VALUE;
 
     public MoMC reestimate(MoMC model, FList<FList<Sequence>> data, ExecutorService executor)
     {
@@ -92,7 +92,7 @@ public class Estimation extends Inference
 
         FMap<String, CPD> new_conditionals = smoothed.apply_to_values(to_conditionals(contexts_per_tag(smoothed)));
 
-        MPD new_priors = MPD.from(tags.applyToValues(count -> P(count / data.size())));
+        MPD new_priors = MPD.from(tags.apply_to_values(count -> P(count / data.size())));
 
         return new MoMC(new_priors, new_conditionals);
     }
@@ -102,7 +102,7 @@ public class Estimation extends Inference
         FMap<String, CPD> new_conditionals = counts.for_ngrams().apply_to_values(to_conditionals(counts
                 .for_tag_context()));
 
-        MPD new_priors = MPD.from(counts.for_priors().applyToValues(count -> P(count.sum() / N)));
+        MPD new_priors = MPD.from(counts.for_priors().apply_to_values(count -> P(count.sum() / N)));
 
         return new MoMC(new_priors, new_conditionals);
     }
@@ -110,14 +110,7 @@ public class Estimation extends Inference
     F2<String, EM_Counter<Ngram>, CPD> to_conditionals(EM_Counter<oo<String, Context>> ngram_counts)
     {
         return (tag, counts) -> CPD.from(counts.apply_to_values(
-                (ngram, count) ->
-                        {
-                            double conditional = count.sum() / ngram_counts.count_of(oo(tag, ngram.context()));
-
-                            return isNaN(conditional) ? ZERO : P(count.sum() / ngram_counts.count_of(oo(tag,
-                                    ngram.context())));
-                        }))
-                ;
+                (ngram, count) -> P(count.sum() / ngram_counts.count_of(oo(tag, ngram.context())))));
     }
 
     F2<String, DecimalCounter<Ngram>, CPD> to_conditionals(DecimalCounter<oo<String, Context>> ngram_counts)
@@ -132,7 +125,7 @@ public class Estimation extends Inference
                 {
                     posterior_density(datum, model).each((tag, p) ->
                             {
-                                double weight = p.toDouble();
+                                double weight = p.toDouble() == 0 ? MIN_WEIGHT : p.toDouble();
                                 counts.for_priors().plus(tag, weight);
 
                                 datum.ngrams().each(ngram ->

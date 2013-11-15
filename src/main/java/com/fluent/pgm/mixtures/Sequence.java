@@ -67,7 +67,7 @@ public interface Sequence
         for (Token each : tokens)
         {
             ngrams.plus(Ngram.from(prev, each));
-            prev = (each);
+            prev = each;
             hasher.putLong(each.id());
         }
 

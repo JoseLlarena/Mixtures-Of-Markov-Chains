@@ -3,7 +3,6 @@ package com.fluent.pgm.mixtures;
 import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
 import com.fluent.math.*;
-import com.fluent.specs.unit.AbstractSpec;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Spy;
@@ -13,11 +12,10 @@ import static com.fluent.collections.Maps.EMPTY_FMAP;
 import static com.fluent.collections.Maps.newFMap;
 import static com.fluent.core.oo.*;
 import static com.fluent.math.P.*;
-import static com.fluent.pgm.mixtures.Common.*;
 import static com.fluent.pgm.mixtures.Inference.Inference;
 import static org.hamcrest.Matchers.*;
 
-public class Inference_Spec extends AbstractSpec
+public class Inference_Spec    extends Base_Spec
 {
     @Spy Inference api = Inference;
     //

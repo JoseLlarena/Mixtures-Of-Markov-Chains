@@ -25,12 +25,13 @@ import static java.util.Collections.reverse;
 public class Viterbi
 {
     public static final Viterbi Viterbi = new Viterbi();
-    static final P OOV_MISMATCH = P(.1);
+    static final P MISSING_MISMATCH = P(1e-10);
     static F2<Token, Context, P> SCORING = (symbol, state) ->
-            symbol == OOV ? OOV_MISMATCH :
-                    symbol.equals(state) ? P(1 - .1) :
-                            ZERO;
-    static CPD DEFAULT_EMISSIONS = (token, context) -> SCORING.of(token, context);
+            state == OOV ? ZERO :
+                    symbol == MISSING ? MISSING_MISMATCH :
+                            symbol.equals(state) ? P(1 - 1e-10) :
+                                    ZERO;
+    static CPD DEFAULT_EMISSIONS = (symbol, state) -> SCORING.of(symbol, state);
 
     public Sequence complete(Sequence datum, CPD A, CPD B)
     {
@@ -64,7 +65,7 @@ public class Viterbi
 
     Path_Memory initial_best(Sequence datum, CPD A, CPD B)
     {
-        FSet<Token> states = A.tokens();
+        FSet<Token> states = A.tokens().minus(OOV);
         Token first_symbol = datum.at(1);
 
         FSet<Score> initial_best_states = states.apply(state -> new Score(state, A.p(state, START).x(B.p(first_symbol,
@@ -80,8 +81,11 @@ public class Viterbi
         FSet<Score> current = previous.apply(score ->
                 {
                     Token state = score.state;
+
                     Score best = max(best_transition(state, previous, A)).x(B.p(symbol, state));
+
                     memory.best_transitions().put(oo(memory.t(), state), best.state);
+
                     return new Score(state, best.value);
                 });
 

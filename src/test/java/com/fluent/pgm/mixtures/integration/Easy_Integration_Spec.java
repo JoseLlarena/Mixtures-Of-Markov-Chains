@@ -2,25 +2,26 @@ package com.fluent.pgm.mixtures.integration;
 
 import com.fluent.core.oo;
 import com.fluent.math.*;
-import com.fluent.specs.unit.AbstractSpec;
+import com.fluent.pgm.mixtures.Base_Spec;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.file.Paths;
 
-import static com.fluent.pgm.mixtures.Common.*;
 import static com.fluent.pgm.mixtures.Easy.Easy;
 import static com.fluent.pgm.mixtures.IO.IO;
 import static org.hamcrest.Matchers.*;
 
-public class Easy_Integration_Spec extends AbstractSpec
+public class Easy_Integration_Spec extends Base_Spec
 {
+    static final String ESTIMATED_SWITCHING = "C2";
+    static final String ESTIMATED_REPEATING = "C1";
+  //
     String model_file = "momc-integration.json";
     String data_directory = "tagged";
     String estimated_model_file = "momc-inegration-estimated.json";
     String data_file = "data-generation.txt";
-    String untagged_sequence = "Any English sentence should do";
 
     @Before
     public void CONTEXT() throws Exception
@@ -93,8 +94,8 @@ public class Easy_Integration_Spec extends AbstractSpec
 
         Easy.character_mixture_from_untagged(data_file, estimated_model_file);
 
-        So(Easy.tag_characters("babababa", estimated_model_file)).shouldBe("C2");
-        So(Easy.tag_characters("aaaaaaaa", estimated_model_file)).shouldBe("C1");
+        So(Easy.tag_characters("babababa", estimated_model_file)).shouldBe(ESTIMATED_SWITCHING);
+        So(Easy.tag_characters("aaaaaaaa", estimated_model_file)).shouldBe(ESTIMATED_REPEATING);
     }
 
     @After

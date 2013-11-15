@@ -23,6 +23,11 @@ class Ngram_Sequence implements Sequence
         return on("").join(tokens().minus(START).minus(END));
     }
 
+    public String toString(String format)
+    {
+        return tokens().toString(format);
+    }
+
     public FList<Ngram> ngrams()
     {
         return ngrams;

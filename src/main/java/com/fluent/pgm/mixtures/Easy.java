@@ -27,8 +27,8 @@ import static com.fluent.pgm.mixtures.IO.IO;
 import static com.fluent.pgm.mixtures.Inference.Inference;
 import static com.fluent.pgm.mixtures.Initialisation.Initialisation;
 import static com.fluent.pgm.mixtures.Optimisation.Optimisation;
-import static com.fluent.pgm.mixtures.Token.OOV;
-import static com.fluent.util.WriteLines.WriteLines;
+import static com.fluent.pgm.mixtures.Token.MISSING;
+import static com.fluent.util.WriteLines.Write_Lines;
 import static java.lang.Double.NEGATIVE_INFINITY;
 import static java.lang.Math.log10;
 import static java.lang.Runtime.getRuntime;
@@ -69,20 +69,6 @@ public class Easy
         return mixture_from(data_file, Sequence::from_chars,model_file);
     }
 
-    //    public FListMultiMap<String, Sequence> split(final FList<Sequence> data, final Mixture mixture)
-    //    {
-    //        return data.groupBy(item -> inferenceOf.maxJoint(item, mixture).$1);
-    //    }
-    //
-    //    public FListMultiMap<String, Sequence> split(final FList<Sequence> data, final Mixture mixture,
-    //                                                 final double threshold)
-    //    {
-    //        F2<String, P, String> unknownIfTooLow = (tag, posterior) -> posterior.toDouble() > threshold ? tag :
-    // UNKNOWN_TAG;
-    //
-    //        return data.groupBy(item ->  maxPosterior(item, mixture).both(unknownIfTooLow));
-    //    }
-
     public MoMC mixture_from(String data_file, F1<String, Sequence> pipeline, String model_file) throws Exception
     {
         FList<Sequence> data = io.data_from(data_file, pipeline);
@@ -105,18 +91,18 @@ public class Easy
 
     public String complete_characters(String datum, String model_file) throws IOException
     {
-        FList<Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("¬") ? OOV : Token.from(chunk))
+        FList <Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("¬") ? MISSING : Token.from(chunk))
                 .minus(Token.from(""));
 
-        return inference.complete(Sequence.from(tokens), io.model_from(Paths.get(model_file))).toString().replaceAll
-                ("\\s+", "");
+
+        return inference.complete(Sequence.from(tokens), io.model_from(Paths.get(model_file))).toString();
     }
 
     public FList<Sequence> untagged_data_from(String model_file, String data_file, int N) throws IOException
     {
         FList<Sequence> data = generate.generate_untagged(N, io.model_from(Paths.get(model_file)), SEED_1);
 
-        WriteLines.INSTANCE.to(Paths.get(data_file), data);
+        Write_Lines.to(Paths.get(data_file), data);
 
         return data;
     }
@@ -155,7 +141,7 @@ public class Easy
                 .apply((tag, sequences_with_tags) ->
                         oo(tag, sequences_with_tags.apply(sequence_with_tag -> sequence_with_tag.$1)));
 
-        WriteLines.to(Paths.get(data_directory), tag_to_sequences);
+        Write_Lines.to(Paths.get(data_directory), tag_to_sequences);
 
         return data;
     }
