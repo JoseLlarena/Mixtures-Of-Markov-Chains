@@ -23,7 +23,7 @@ public interface MPD
             return ZERO;
         }
     };
-    static final double tolerance = .000000001;
+    static final double tolerance = 1e-10;
 
     public static MPD from(FMap<String, P> raw)
     {

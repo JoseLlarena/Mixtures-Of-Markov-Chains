@@ -19,7 +19,7 @@ import static java.lang.Math.abs;
  */
 public interface CPD
 {
-    static final double tolerance = .000000001;
+    static final double tolerance = 1e-10;
 
     public P p(Token token, Context context);
 

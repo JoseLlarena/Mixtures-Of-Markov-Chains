@@ -80,7 +80,7 @@ public class Easy
 
         MoMC model = (MoMC) f3(optimise::optimise, MoMC.class, OP1.class, Condition.class)
                 .and_then(f1(estimate::smooth))
-                .of(init.initialise_with(data), (OP1<MoMC>) em::apply, stopping_criterion(data, 99.9999, 10));
+                .of(init.initialise_with(data), (OP1<MoMC>) em::apply, stopping_criterion(data, 99.99, 10));
 
         executor.shutdown();
 

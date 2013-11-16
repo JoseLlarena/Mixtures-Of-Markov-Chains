@@ -20,7 +20,7 @@ public class Initialisation
 {
     public static final Initialisation Initialisation = new Initialisation();
     //
-    static final OP1<Double> NOISE_SCALING = weight -> weight * .001;
+    static final OP1<Double> NOISE_SCALING = weight -> weight * 1e-3;
 
     public MoMC initialise_with(FList<Sequence> data)
     {
@@ -60,7 +60,7 @@ public class Initialisation
         public static final Options DEFAULT = new Options();
         //
         int tag = 6;
-        long seed = Common.SEED_1 + 54;
+        long seed = Common.SEED_1;
 
         public int tag_count()
         {

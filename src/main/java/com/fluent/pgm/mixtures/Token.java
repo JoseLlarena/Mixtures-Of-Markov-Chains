@@ -1,18 +1,19 @@
 package com.fluent.pgm.mixtures;
 
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import com.google.common.hash.HashFunction;
 
 import java.util.concurrent.ExecutionException;
 
+import static com.fluent.pgm.mixtures.Common.*;
 import static com.google.common.hash.Hashing.goodFastHash;
 import static java.lang.String.valueOf;
 
 public interface Token extends Context
 {
     static HashFunction hash = goodFastHash(64);
-    public static Cache<Long, Token> id_to_token = CacheBuilder.newBuilder().maximumSize(100_000).recordStats().build();
+    static Cache<Long, Token> id_to_token = cache().maximumSize(100_000).build();
+    //
     static final long START_ID = id_from("!^!"), END_ID = id_from("!$!"), OOV_ID = id_from("!?!"),
             MISSING_ID = id_from("¬");
     public static final Token
@@ -25,8 +26,6 @@ public interface Token extends Context
     {
         return Token.from(valueOf(letter));
     }
-
-    public static long id_from(String string) {return hash.hashString(string).asLong();}
 
     public static Token from(String string)
     {

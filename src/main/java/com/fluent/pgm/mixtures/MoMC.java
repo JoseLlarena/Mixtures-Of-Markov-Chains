@@ -14,7 +14,6 @@ import static com.fluent.pgm.mixtures.IO.MoMC_Serialiser;
  */
 @JsonSerialize(using = MoMC_Serialiser.class)
 @JsonDeserialize(using = MoMC_Deserialiser.class)
-
 public class MoMC extends oo<MPD, FMap<String, CPD>>
 {
     public MoMC(MPD $1, FMap<String, CPD> $2)
