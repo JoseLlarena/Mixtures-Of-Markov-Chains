@@ -82,8 +82,7 @@ Porting to other languages
 
 Get in touch if you need help to port to other programming languages.
 
-The api is self contained except for the [P class] (https://github
-.com/JoseLlarena/Math-lambda/blob/master/src/main/java/com/fluent/math/P.java) (in Math-lambda) which represents the probability data type and
+The api is self contained except for the [P class] (https://github.com/JoseLlarena/Math-lambda/blob/master/src/main/java/com/fluent/math/P.java) (in Math-lambda) which represents the probability data type and
 encapsulates underflow/overwflow handling logic. The other dependencies are there mostly to compensate for Java's lack of
 a rich collections library and functional constructs.
 
@@ -112,8 +111,9 @@ then you can reference it in your pom.xml as
 </dependency>
 ```
 
-depends on [Math-lambda](https://github.com/JoseLlarena/Core-lambda),
-[Utils-lambda](https://github.com/JoseLlarena/Collections-lambda) and [Fluent-Specs](https://github.com/JoseLlarena/Collections-lambda)
+depends on [Math-lambda](https://github.com/JoseLlarena/Math-lambda),
+[Utils-lambda](https://github.com/JoseLlarena/Utils-lambda) and [Fluent-Specs](https://github
+.com/JoseLlarena/Fluent-Specs)
 
 
 Improvements
