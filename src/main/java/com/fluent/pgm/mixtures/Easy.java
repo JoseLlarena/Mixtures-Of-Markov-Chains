@@ -3,10 +3,7 @@ package com.fluent.pgm.mixtures;
 import com.fluent.collections.FList;
 import com.fluent.collections.FListMultiMap;
 import com.fluent.collections.FMap;
-import com.fluent.core.Condition;
-import com.fluent.core.F1;
-import com.fluent.core.OP1;
-import com.fluent.core.oo;
+import com.fluent.core.*;
 import com.fluent.math.*;
 import com.google.common.util.concurrent.AtomicDouble;
 import org.slf4j.Logger;
@@ -17,8 +14,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.fluent.collections.Lists.parse;
-import static com.fluent.core.Functions.f1;
-import static com.fluent.core.Functions.f3;
 import static com.fluent.core.oo.*;
 import static com.fluent.pgm.mixtures.Common.SEED_1;
 import static com.fluent.pgm.mixtures.Estimation.Estimation;
@@ -26,6 +21,7 @@ import static com.fluent.pgm.mixtures.Generation.Generation;
 import static com.fluent.pgm.mixtures.IO.IO;
 import static com.fluent.pgm.mixtures.Inference.Inference;
 import static com.fluent.pgm.mixtures.Initialisation.Initialisation;
+import static com.fluent.pgm.mixtures.Initialisation.Options;
 import static com.fluent.pgm.mixtures.Optimisation.Optimisation;
 import static com.fluent.pgm.mixtures.Token.MISSING;
 import static com.fluent.util.WriteLines.Write_Lines;
@@ -45,17 +41,17 @@ public class Easy
     Estimation estimate;
     Optimisation optimise;
     IO io;
-    Inference inference;
+    Inference infer;
     Generation generate;
 
-    Easy(IO io, Inference infer, Initialisation init, Estimation estimation, Optimisation optimisation,
+    Easy(IO io, Inference infer, Initialisation init, Estimation estimate, Optimisation optimise,
          Generation generate)
     {
         this.io = io;
-        this.inference = infer;
+        this.infer = infer;
         this.init = init;
-        this.estimate = estimation;
-        this.optimise = optimisation;
+        this.estimate = estimate;
+        this.optimise = optimise;
         this.generate = generate;
     }
 
@@ -66,21 +62,22 @@ public class Easy
 
     public MoMC character_mixture_from_untagged(String data_file, String model_file) throws Exception
     {
-        return mixture_from(data_file, Sequence::from_chars,model_file);
+        return mixture_from(data_file, Sequence::from_chars, model_file);
     }
 
-    public MoMC mixture_from(String data_file, F1<String, Sequence> pipeline, String model_file) throws Exception
+    public MoMC mixture_from(String data_file, F1<String, Sequence> pipeline, String model_file,
+                             Options options) throws Exception
     {
         FList<Sequence> data = io.data_from(data_file, pipeline);
 
         ExecutorService executor = newFixedThreadPool(thread_count());
 
-        F1<MoMC, MoMC> em = f3(estimate::reestimate, MoMC.class, FList.class, ExecutorService.class)
-                .with_args_2_3(data.split(thread_count()), executor);
+        OP1<MoMC> em = model  -> estimate.reestimate(model , data.split(thread_count()), executor);
 
-        MoMC model = (MoMC) f3(optimise::optimise, MoMC.class, OP1.class, Condition.class)
-                .and_then(f1(estimate::smooth))
-                .of(init.initialise_with(data), (OP1<MoMC>) em::apply, stopping_criterion(data, 99.99, 10));
+        F3<MoMC, OP1<MoMC>, Condition<MoMC>, MoMC> optimised = optimise::optimise;
+
+        MoMC model = optimised.and_then(estimate::smooth)
+                .of(init.initialise_with(data, options),  em, stopping_criterion(data, 99.99, 10));
 
         executor.shutdown();
 
@@ -89,13 +86,17 @@ public class Easy
         return model;
     }
 
+    public MoMC mixture_from(String data_file, F1<String, Sequence> pipeline, String model_file) throws Exception
+    {
+        return mixture_from(data_file,pipeline,model_file,Options.DEFAULT);
+    }
+
     public String complete_characters(String datum, String model_file) throws IOException
     {
-        FList <Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("¬") ? MISSING : Token.from(chunk))
+        FList<Token> tokens = parse(datum, "").apply(chunk -> chunk.equals("¬") ? MISSING : Token.from(chunk))
                 .minus(Token.from(""));
 
-
-        return inference.complete(Sequence.from(tokens), io.model_from(Paths.get(model_file))).toString();
+        return infer.complete(Sequence.from(tokens), io.model_from(Paths.get(model_file))).toString();
     }
 
     public FList<Sequence> untagged_data_from(String model_file, String data_file, int N) throws IOException
@@ -121,7 +122,7 @@ public class Easy
         final Sequence sequence = Sequence.from_chars(untagged);
         final MoMC model = io.model_from(Paths.get(model_file));
 
-        return inference.joint(sequence, model).max_as((tag, posterior) -> posterior).$1;
+        return infer.joint(sequence, model).max_as((tag, posterior) -> posterior).$1;
     }
 
     public FMap<String, P> fuzzy_tag_characters(String untagged, String model_file) throws IOException
@@ -129,7 +130,7 @@ public class Easy
         final Sequence sequence = Sequence.from_chars(untagged);
         final MoMC model = io.model_from(Paths.get(model_file));
 
-        return inference.posterior_density(sequence, model);
+        return infer.posterior_density(sequence, model);
     }
 
     public FList<oo<Sequence, String>> tagged_data_from(String model_file, String data_directory, int N) throws
@@ -162,7 +163,7 @@ public class Easy
 
         return model ->
                 {
-                    double loglikelihood = inference.likelihood(model, data).asLog();
+                    double loglikelihood = infer.likelihood(model, data).asLog();
 
                     log.info(format("em iteration [%04d] log-likelihood [%15.8f]", iteration.getAndIncrement(),
                             loglikelihood));
@@ -175,4 +176,5 @@ public class Easy
                     return improvement_iterations.get() >= min_improvement_iterations;
                 };
     }
+
 }

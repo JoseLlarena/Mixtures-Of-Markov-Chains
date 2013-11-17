@@ -4,6 +4,7 @@ import com.fluent.collections.FList;
 import com.fluent.collections.FMap;
 import com.fluent.math.*;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.Spy;
 
@@ -15,6 +16,7 @@ import static com.fluent.math.P.*;
 import static com.fluent.pgm.mixtures.Inference.Inference;
 import static org.hamcrest.Matchers.*;
 
+@Ignore
 public class Inference_Spec    extends Base_Spec
 {
     @Spy Inference api = Inference;

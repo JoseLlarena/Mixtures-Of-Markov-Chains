@@ -59,12 +59,21 @@ public class Initialisation
     {
         public static final Options DEFAULT = new Options();
         //
-        int tag = 6;
+        int tag_count = 6;
         long seed = Common.SEED_1;
 
         public int tag_count()
         {
-            return tag;
+            return tag_count;
+        }
+
+        public Options with_tag_count(int tag_count)
+        {
+            Options options = new Options();
+            options.seed = seed;
+            options.tag_count = tag_count;
+
+            return options;
         }
 
         public long seed()

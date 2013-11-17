@@ -24,7 +24,7 @@ public class Data_Generation_Spec   extends Base_Spec
     public void generates_data_from_momc() throws Exception
     {
         THEN(Generation.generate_untagged(N = 2, model, SEED_1)).shouldBe(asFList(Sequence.from_chars("a"),
-                Sequence.from_chars("a")));
+                Sequence.from_chars("bbbb")));
     }
 
     @Test//FIXME WE WANT TO TEST SEQUENCES ARE GENERATED WITH CORRECT FREQUENCY
@@ -32,13 +32,6 @@ public class Data_Generation_Spec   extends Base_Spec
     {
         THEN(Generation.sequences_from(asFList(SWITCHING, SWITCHING), model.transitions_per_tag(),
                 new Random(SEED_1))).shouldBe(asFList
-                (Sequence.from_chars("ab"), Sequence.from_chars("b")));
+                (Sequence.from_chars("babababa"), Sequence.from_chars("b")));
     }
-
-    //    @Test
-    //    public void generates_classes_from_momc_with_correct_frequency() throws Exception
-    //    {
-    //        THEN(Counting.of.frequency(Generation.generate_classes(N = 1000, model, new Random(SEED_1))).get(C1)).
-    //                shouldBe(closeTo(.3, .05));
-    //    }
 }

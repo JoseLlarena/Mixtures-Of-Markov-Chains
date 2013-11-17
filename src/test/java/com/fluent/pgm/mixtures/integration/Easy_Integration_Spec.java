@@ -20,7 +20,7 @@ public class Easy_Integration_Spec extends Base_Spec
   //
     String model_file = "momc-integration.json";
     String data_directory = "tagged";
-    String estimated_model_file = "momc-inegration-estimated.json";
+    String estimated_model_file = "momc-integration-estimated.json";
     String data_file = "data-generation.txt";
 
     @Before
@@ -90,7 +90,7 @@ public class Easy_Integration_Spec extends Base_Spec
     @Test
     public void estimates_mixture_from_untagged_data() throws Exception
     {
-        Easy.untagged_data_from(model_file, data_file, 100_000);
+        Easy.untagged_data_from(model_file, data_file, 10_000);
 
         Easy.character_mixture_from_untagged(data_file, estimated_model_file);
 

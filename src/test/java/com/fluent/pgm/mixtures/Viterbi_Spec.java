@@ -3,33 +3,29 @@ package com.fluent.pgm.mixtures;
 import com.fluent.collections.FMap;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Spy;
 
 import static com.fluent.collections.Lists.EMPTY_FLIST;
 import static com.fluent.collections.Maps.newFMap;
 import static com.fluent.core.oo.*;
 import static com.fluent.pgm.mixtures.Token.END;
-import static com.fluent.pgm.mixtures.Token.OOV;
+import static com.fluent.pgm.mixtures.Token.MISSING;
 import static com.fluent.pgm.mixtures.Viterbi.*;
 import static com.fluent.pgm.mixtures.Viterbi.Viterbi;
 
 public class Viterbi_Spec extends Base_Spec
 {
-    Token a = Token.from("a"), b = Token.from("b");
-    Sequence state_sequence = Sequence.from_chars("bba"), sequence = Sequence.from(OOV, OOV, OOV);
+    Sequence state_sequence = Sequence.from_chars("bba"), sequence = Sequence.from(MISSING, MISSING, MISSING);
     int T = state_sequence.size();
     Path_Memory memory;
-    Path_Memory expected;
     CPD transitions = example_model().transitions_for(SWITCHING);
-    @Spy Viterbi api = Viterbi;
 
     @Before
     public void CONTEXT()
     {
         FMap best_transitions = newFMap()
-                .plus(oo(T - 3, a), a).plus(oo(T - 3, b), b)
-                .plus(oo(T - 2, a), b).plus(oo(T - 2, b), a)
-                .plus(oo(T - 1, END), a);
+                .plus(oo(T - 3, A), A).plus(oo(T - 3,B), B)
+                .plus(oo(T - 2, A), B).plus(oo(T - 2, B), A)
+                .plus(oo(T - 1, END), A);
 
         memory = new Path_Memory(EMPTY_FLIST, best_transitions, T);
     }
@@ -43,6 +39,6 @@ public class Viterbi_Spec extends Base_Spec
     @Test
     public void finds_best_completion() throws Exception
     {
-        So(api.complete(sequence, transitions, DEFAULT_EMISSIONS)).shouldBe(Sequence.from(b, a, b));
+        So(Viterbi.complete(sequence, transitions, DEFAULT_EMISSIONS)).shouldBe(Sequence.from(B, B, B));
     }
 }

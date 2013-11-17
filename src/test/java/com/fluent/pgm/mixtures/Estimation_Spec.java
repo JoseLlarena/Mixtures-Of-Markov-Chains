@@ -2,6 +2,7 @@ package com.fluent.pgm.mixtures;
 
 import com.fluent.collections.FMap;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static com.fluent.collections.Maps.newOrderedFMap;
@@ -10,6 +11,7 @@ import static com.fluent.pgm.mixtures.Estimation.Estimation;
 import static com.fluent.pgm.mixtures.Token.END;
 import static com.fluent.pgm.mixtures.Token.START;
 
+@Ignore
 public class Estimation_Spec   extends Base_Spec
 {
     MoMC model = example_model(), the_smoothed_model;
