@@ -112,8 +112,7 @@ then you can reference it in your pom.xml as
 ```
 
 depends on [Math-lambda](https://github.com/JoseLlarena/Math-lambda),
-[Utils-lambda](https://github.com/JoseLlarena/Utils-lambda) and [Fluent-Specs](https://github
-.com/JoseLlarena/Fluent-Specs)
+[Utils-lambda](https://github.com/JoseLlarena/Utils-lambda) and [Fluent-Specs](https://github.com/JoseLlarena/Fluent-Specs)
 
 
 Improvements
