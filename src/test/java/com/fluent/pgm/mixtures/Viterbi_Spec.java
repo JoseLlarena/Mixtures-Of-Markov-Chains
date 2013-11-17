@@ -39,6 +39,6 @@ public class Viterbi_Spec extends Base_Spec
     @Test
     public void finds_best_completion() throws Exception
     {
-        So(Viterbi.complete(sequence, transitions, DEFAULT_EMISSIONS)).shouldBe(Sequence.from(B, B, B));
+        So(Viterbi.complete(sequence, transitions, DEFAULT_EMISSIONS)).shouldBe(Sequence.from(B, A, B));
     }
 }

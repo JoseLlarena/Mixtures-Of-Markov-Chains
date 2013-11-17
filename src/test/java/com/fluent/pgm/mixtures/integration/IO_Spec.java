@@ -14,7 +14,7 @@ import static com.fluent.pgm.mixtures.IO.IO;
 public class IO_Spec extends Base_Spec
 {
     MoMC model;
-    Path file = Paths.get(System.getProperty("user.dir"), "momc.json");
+    Path file = Paths.get("src/test/resources/momc.json");
 
     @Before
     public void CONTEXT()
@@ -32,6 +32,6 @@ public class IO_Spec extends Base_Spec
     @After
     public void CLEAN() throws Exception
     {
-        Paths.get(System.getProperty("user.dir"), "momc.json");
+        Paths.get(System.getProperty("user.dir"), "momc.json").toFile().delete();
     }
 }

@@ -32,6 +32,6 @@ public class Data_Generation_Spec   extends Base_Spec
     {
         THEN(Generation.sequences_from(asFList(SWITCHING, SWITCHING), model.transitions_per_tag(),
                 new Random(SEED_1))).shouldBe(asFList
-                (Sequence.from_chars("babababa"), Sequence.from_chars("b")));
+                (Sequence.from_chars("babababa"), Sequence.from_chars("bab")));
     }
 }

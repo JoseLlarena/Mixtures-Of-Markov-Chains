@@ -15,13 +15,13 @@ import static org.hamcrest.Matchers.*;
 
 public class Easy_Integration_Spec extends Base_Spec
 {
-    static final String ESTIMATED_SWITCHING = "C2";
-    static final String ESTIMATED_REPEATING = "C1";
+    static final String ESTIMATED_SWITCHING = "C1";
+    static final String ESTIMATED_REPEATING = "C2";
   //
-    String model_file = "momc-integration.json";
-    String data_directory = "tagged";
-    String estimated_model_file = "momc-integration-estimated.json";
-    String data_file = "data-generation.txt";
+    String model_file = "src/test/resources/momc-integration.json";
+    String data_directory = "src/test/resources/tagged";
+    String estimated_model_file = "src/test/resources/momc-integration-estimated.json";
+    String data_file = "src/test/resources/data-generation.txt";
 
     @Before
     public void CONTEXT() throws Exception
@@ -90,7 +90,7 @@ public class Easy_Integration_Spec extends Base_Spec
     @Test
     public void estimates_mixture_from_untagged_data() throws Exception
     {
-        Easy.untagged_data_from(model_file, data_file, 10_000);
+        Easy.untagged_data_from(model_file, data_file, 100_000);
 
         Easy.character_mixture_from_untagged(data_file, estimated_model_file);
 

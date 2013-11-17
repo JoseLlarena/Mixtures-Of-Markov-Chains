@@ -59,7 +59,7 @@ public class Initialisation
     {
         public static final Options DEFAULT = new Options();
         //
-        int tag_count = 6;
+        int tag_count = 2;
         long seed = Common.SEED_1;
 
         public int tag_count()
