@@ -14,12 +14,13 @@ p(tag,sequence) = p(tag) p(s1) p(s2|s1)...p(sT|sT-1)
 for a sequence of length T, assuming a first order Markov Chain, ie, a symbol's probability is independent of all previous
 history given the previous symbol.
 
-An example dataset is provided which contains 100 sentences in 6 languages (German, Danish, Dutch, Norwegian,English,
+An small dataset is provided which contains 100 sentences in 6 languages (German, Danish, Dutch, Norwegian,English,
 Swedish) taken from the [Leipzig news corpus](http://corpora.uni-leipzig.de/download.html).
 
-[This example](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Language_Example.java) shows how MoMC clustering automatically splits the dataset into each language,
-except Danish and Norwegian which due to the similarity in spelling are both given the same two tags.To run from root
- of project:
+[This example](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm
+/mixtures/Language_Example.java) shows how MoMC clustering automatically splits the dataset into each
+language (except Danish and Norwegian which due to the similarity in spelling are both given the same two tags). To
+run  from root of project:
 
 ```shell
 java -cp target/mixtures-1.0.0-jar com.fluent.pgm.mixtures.Language_Example src/main/resources/de_dk_nl_no_en_se.txt
@@ -30,7 +31,8 @@ Clustering
 ===================
 
 Fuzzy clustering is implemented by computing the posterior probability of a tag given a sequence. Hard clustering
-is just a case of finding the tag the highest probability
+is just a case of finding the tag the highest probability (though a more efficient way to compute the latter is to use
+the joint instead)
 
 
 ```java
@@ -59,8 +61,9 @@ TBD
 Performance
 ===================
 
-Not great. This is due to the use of non-lazy collections, ie, chained operations do not share loops. Big O complexity
-for most operations should still be best, specifically EM is still O(kn)  (k = number of classes,
+Not great. This is due to the use of functional style operations with eager collections, ie,
+chained operations do not share loops. Scalability as per algorithmic complexity
+for most operations should still be ok, specifically EM is still O(kn)  (k = number of classes,
 n = size of data set).
 
 Implementation Notes (For Java Devs)
@@ -68,9 +71,12 @@ Implementation Notes (For Java Devs)
 
 Code style departs from traditional Java:
 
-* use of under underscore instead of camel case, see [why](http://www.cs.kent.edu/~jmaletic/papers/ICPC2010-CamelCaseUnderScoreClouds.pdf)
+* FP-ish style with pure functions in classes as namespaces and reliance on rich collection operations (though not as
+ much I'd like to due to performance reasons)
 
-* dropped private and final modifiers, here's [why](http://skillsmatter.com/podcast/java-jee/radical-simplicity/js-2051)
+* use of under underscore instead of camel case, [see why](http://www.cs.kent.edu/~jmaletic/papers/ICPC2010-CamelCaseUnderScoreClouds.pdf)
+
+* dropped private and final modifiers, [here's why](http://skillsmatter.com/podcast/java-jee/radical-simplicity/js-2051)
 
 
 Tests are mostly integration with a few focussed unit tests. This was an experiment that's reinforced my belief that
