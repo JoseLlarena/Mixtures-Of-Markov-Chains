@@ -45,17 +45,71 @@ the joint instead)
 Estimation
 ===================
 
-TBD
+__Supervised__
+
+```java
+         MoMC model = Estimation.estimate(data_directory)
+```
+
+will read sequences, one per line, from all files in the directory, using the name of the file as the name of the tag.
+Model will be estimated wth nomralised counts ( Maximum Likelihood). Strictly speaking this model is a Conditional
+Markov Chain rather than a mixture.
+
+
+__Unsupervised__
+
+```java
+          MoMC model = Easy.mixture_from(data_file, conversion_from_string_to_Sequence, model_output_file)
+```
+
+Will read sequences and train a model using Expectation-Maximisation, saving it to the provided file and returning it.
+
+Convergence is by default defined as an improvement of less than 99.99 % over previous iteration for 10 iterations.
+The initial model has parameters initialised at random. After convergence, parameters are smoothed using a simple add
+delta smoothing (adding a very small probability to all ngrams, including unseen ones)
+
+Classes [Estimation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Estimation.java), [Initialisation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Initialisation.java) and
+[Optimisation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Optimisation.java) can be used to implement custom EM training
+schemes.
+
+
 
 Data Completion
 ===================
 
-TBD
+
+Data completion is implemented using a simplified version of the [Viterbi algorithm](http://en.wikipedia.org/wiki/Viterbi_algorithm)
+
+```java
+        String completed = Easy.complete_characters(" with ¬¬¬ ", model_file);
+```
+
+where ¬ is used to represent the missing symbol
+
 
 Data Generation
 ===================
 
-TBD
+Untagged data can be generated like this:
+
+```java
+
+    FList<Sequence> generated = Easy.untagged_data_from(model_file,output_file,1000)
+```
+
+will generate 1000 sequences and save them to file and also return them as a list.
+
+
+
+Tagged data can be generated like this:
+
+```java
+
+    FList<oo<Sequence, String>> generated = Easy.tagged_data_from(model_file,output_file,1000)
+```
+
+will generate 1000 pairs of sequences with their corresponding tags and save them to file and also return them as a
+list.
 
 
 Performance
