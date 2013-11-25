@@ -55,6 +55,8 @@ will read sequences, one per line, from all files in the directory, using the na
 Model will be estimated wth normalised counts ( Maximum Likelihood). Strictly speaking this model is a Conditional
 Markov Chain rather than a mixture.
 
+The implementation is serial.
+
 
 __Unsupervised__
 
@@ -70,7 +72,9 @@ delta smoothing (adding a very small probability to all ngrams, including unseen
 
 The second argument allows specification of a conversion from the raw input string to a Sequence object. For instance
  *Sequence::from_chars* will make a Sequence where each character in the original string is a token,
- whereas Sequence:from_words will split it using white space and use the resulting chunks as tokens.
+ whereas *Sequence:from_words* will split it using white space and use the resulting chunks as tokens.
+
+The implementation is paralell, one thread per core.
 
 Classes [Estimation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Estimation.java), [Initialisation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Initialisation.java) and
 [Optimisation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Optimisation.java) can be used to implement custom EM training
