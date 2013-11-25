@@ -52,7 +52,7 @@ __Supervised__
 ```
 
 will read sequences, one per line, from all files in the directory, using the name of the file as the name of the tag.
-Model will be estimated wth nomralised counts ( Maximum Likelihood). Strictly speaking this model is a Conditional
+Model will be estimated wth normalised counts ( Maximum Likelihood). Strictly speaking this model is a Conditional
 Markov Chain rather than a mixture.
 
 
@@ -67,6 +67,10 @@ Will read sequences and train a model using Expectation-Maximisation, saving it 
 Convergence is by default defined as an improvement of less than 99.99 % over previous iteration for 10 iterations.
 The initial model has parameters initialised at random. After convergence, parameters are smoothed using a simple add
 delta smoothing (adding a very small probability to all ngrams, including unseen ones)
+
+The second argument allows specification of a conversion from the raw input string to a Sequence object. For instance
+ *Sequence::from_chars* will make a Sequence where each character in the original string is a token,
+ whereas Sequence:from_words will split it using white space and use the resulting chunks as tokens.
 
 Classes [Estimation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Estimation.java), [Initialisation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Initialisation.java) and
 [Optimisation](https://github.com/JoseLlarena/Mixtures-Of-Markov-Chains/blob/master/src/main/java/com/fluent/pgm/mixtures/Optimisation.java) can be used to implement custom EM training
