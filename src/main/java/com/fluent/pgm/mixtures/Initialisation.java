@@ -44,7 +44,7 @@ public class Initialisation
 
     CPD transitions_from(FList<Sequence> data, F0<Double> new_weight)
     {
-        FMap<Ngram, P> transitions = data.flat(datum -> datum.ngrams()).aggregate(newFMap(),
+        FMap<Ngram, P> transitions = data.flatmap(datum -> datum.ngrams()).aggregate(newFMap(),
                 (ngram_to_p, ngram) -> ngram_to_p.plus(ngram, P((new_weight.value()))));
 
         return CPD.lenient_from(transitions);

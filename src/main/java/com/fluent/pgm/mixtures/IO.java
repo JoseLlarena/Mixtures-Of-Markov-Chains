@@ -59,7 +59,7 @@ public class IO
         final F1<Path, F1<String, oo<Sequence, String>>> path_to_line_to_tagged_sequence =
                 path -> line -> oo(Sequence.from_chars(line), path.toFile().getName().split("\\.txt")[0]);
 
-        return files.throwing_flatten(file -> Read_Lines.from(file, path_to_line_to_tagged_sequence.of(file)));
+        return files.throwing_flatmap(file -> Read_Lines.from(file, path_to_line_to_tagged_sequence.of(file)));
     }
 
     public FList<oo<Sequence, String>> tagged_word_data_from(String data_directory) throws Exception
@@ -69,7 +69,7 @@ public class IO
         final F1<Path, F1<String, oo<Sequence, String>>> path_to_line_to_tagged_sequence =
                 path -> line -> oo(Sequence.from_words(line), path.toFile().getName().split("\\.txt")[0]);
 
-        return files.throwing_flatten(file -> Read_Lines.from(file, path_to_line_to_tagged_sequence.of(file)));
+        return files.throwing_flatmap(file -> Read_Lines.from(file, path_to_line_to_tagged_sequence.of(file)));
     }
 
     static class MoMC_Serialiser extends JsonSerializer<MoMC>
